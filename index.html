@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Speaking Practice</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .task-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+        .timer {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #2563eb;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:disabled {
+            background: #93c5fd;
+            cursor: not-allowed;
+        }
+        .task-content {
+            margin: 20px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
+        }
+        input {
+            margin: 5px;
+            padding: 8px;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>IELTS Speaking Practice</h1>
+        
+        <div class="user-info">
+            <h2>User Information</h2>
+            <input type="text" id="userName" placeholder="Full Name" required>
+            <input type="number" id="userAge" placeholder="Age" required min="16" max="100">
+        </div>
+        
+        <div class="task-section">
+            <h2>Current Task</h2>
+            <div id="taskContent" class="task-content"></div>
+            <div id="timer" class="timer">Preparation: 1:00</div>
+            
+            <button id="startBtn">Start Task</button>
+            <button id="recordBtn" disabled>Record Response</button>
+            <button id="stopBtn" disabled>Stop Recording</button>
+            <button id="submitBtn" disabled>Submit Response</button>
+        </div>
+
+        <div id="report" class="report" style="display: none">
+            <h2>IELTS Speaking Test Report</h2>
+            <div id="reportContent"></div>
+        </div>
+    </div>
+
+<script>
+// Define tasks first
+const tasks = [
+    {
+        part: 1,
+        question: `Let me ask you about your home town or city.
+
+- What kind of place is it?
+- What do you like most about it?
+- What kinds of jobs do the people in your town/city do?
+- Would you say it's a good place to live? (Why?)`
+    },
+    {
+        part: 2,
+        question: `Describe a skill you would like to learn in the future.
+
+You should say:
+- what the skill is
+- when you want to learn it
+- how you will learn it
+- and explain why you want to learn this skill`
+    }
+];
+
+// Initialize variables
+let currentTaskIndex = 0;
+let mediaRecorder;
+let audioChunks = [];
+let timer;
+let remainingTime;
+
+// Get DOM elements
+const startBtn = document.getElementById('startBtn');
+const recordBtn = document.getElementById('recordBtn');
+const stopBtn = document.getElementById('stopBtn');
+const submitBtn = document.getElementById('submitBtn');
+const timerDisplay = document.getElementById('timer');
+const taskContent = document.getElementById('taskContent');
+
+// Define displayTask function
+function displayTask(index) {
+    const task = tasks[index];
+    taskContent.innerText = task.question;
+}
+
+// Initialize first task
+displayTask(currentTaskIndex);
+
+// Timer function
+function updateTimer(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    timerDisplay.textContent = `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
+
+function startTimer(duration, type) {
+    remainingTime = duration;
+    updateTimer(remainingTime);
+    
+    timer = setInterval(() => {
+        remainingTime--;
+        updateTimer(remainingTime);
+        
+        if (remainingTime <= 0) {
+            clearInterval(timer);
+            if (type === 'prep') {
+                timerDisplay.textContent = 'Start Speaking!';
+                recordBtn.disabled = false;
+                startBtn.disabled = true;
+            } else if (type === 'speaking') {
+                stopRecording();
+            }
+        }
+    }, 1000);
+}
+
+// Event Listeners
+startBtn.addEventListener('click', () => {
+    if (!document.getElementById('userName').value || !document.getElementById('userAge').value) {
+        alert('Please fill in your name and age before starting the test.');
+        return;
+    }
+    startTimer(60, 'prep'); // 60 seconds preparation time
+    startBtn.disabled = true;
+});
+
+recordBtn.addEventListener('click', async () => {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        
+        mediaRecorder.addEventListener('dataavailable', event => {
+            audioChunks.push(event.data);
+        });
+
+        mediaRecorder.addEventListener('stop', () => {
+            submitBtn.disabled = false;
+        });
+
+        audioChunks = [];
+        mediaRecorder.start();
+        recordBtn.disabled = true;
+        stopBtn.disabled = false;
+        startTimer(120, 'speaking'); // 2 minutes speaking time
+    } catch (err) {
+        console.error('Error accessing microphone:', err);
+        alert('Error accessing microphone. Please ensure you have granted microphone permissions.');
+    }
+});
+
+stopBtn.addEventListener('click', stopRecording);
+
+function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        clearInterval(timer);
+        stopBtn.disabled = true;
+        timerDisplay.textContent = 'Recording complete';
+    }
+}
+
+submitBtn.addEventListener('click', async () => {
+    // Implementation for submitting recording
+    // This will be implemented when we add the OpenAI API integration
+    alert('Response submitted! This is a placeholder - API integration will be added later.');
+});
+</script>
+</body>
+</html>
