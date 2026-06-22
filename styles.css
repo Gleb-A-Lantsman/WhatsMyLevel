@@ -175,6 +175,23 @@ input:invalid:not(:placeholder-shown) { border-color: var(--color-danger); }
 }
 .icon-btn.square { border-radius: 8px; background: #fff; color: var(--color-text); border: 1px solid var(--color-border); }
 .icon-btn.muted { background: #9aa5b1; }
+.volume-control { position: relative; }
+.volume-popover {
+  display: none;
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background: #fff;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 20px rgba(15,23,42,0.16);
+  padding: 12px 14px;
+  z-index: 30;
+}
+.volume-popover.visible { display: block; }
+.volume-popover input[type="range"] {
+  width: 110px;
+  accent-color: var(--color-primary);
+}
 
 /* ---------------------------------------------------------------- */
 /* Generic centered "card" screens (welcome, audio check, intros…)  */
