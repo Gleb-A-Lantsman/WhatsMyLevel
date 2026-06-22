@@ -18,20 +18,24 @@ The Listening section is fully built — three tasks, 10 questions each, custom 
 Convert your `.m4a` files to `.mp3` and drop them into an `audio/` folder next to `index.html`, named exactly:
 
 ```
+audio/audio-check.mp3
 audio/listening-1.mp3
 audio/listening-2.mp3
 audio/listening-3.mp3
 ```
 
-(Or edit the `audioUrl` path for each task in `data.js` if you'd rather name them differently.) If a file is missing, the app shows a small inline error on that task instead of breaking — handy for testing before the real files are in place.
+`audio-check.mp3` is the short "this is an audio check" recording — it plays on the audio check screen (right after Welcome, before Reading starts) so students can confirm their sound works before any timer starts. The other three are the Listening tasks.
+
+(Or edit the `audioUrl` paths in `data.js` — `audioCheck.audioUrl` for the check, each task's `audioUrl` for Listening — if you'd rather name the files differently.) If a file is missing, the app shows a small inline error instead of breaking — handy for testing before the real files are in place.
 
 ## Deploying
 
-**Option A — drag and drop:** Go to your Netlify dashboard → "Add new site" → "Deploy manually" → drag this whole `entry-test` folder onto the page. Done.
+This lives in its own repo (`WhatsMyLevel`), so everything goes straight into the root — no subfolder needed:
 
-**Option B — GitHub:** Add this folder to your `RE-Academy-Launcher` repo (e.g. as `entry-test/`), push it, and either point a Netlify site at that subfolder (Site settings → Build & deploy → Base directory) or create it as its own Netlify site pointing at the repo root if you split it out into its own repo.
+1. Upload `index.html`, `styles.css`, `data.js`, `app.js`, and the `audio/` folder into the root of the repo (replacing any placeholder `index.html` that's there).
+2. In Netlify, point a site at this repo with the base directory left blank (`.`) and no build command — it's static files only.
 
-No build command or environment variables are needed — it's static files only.
+No environment variables needed.
 
 ## A note on content
 
