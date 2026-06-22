@@ -151,13 +151,15 @@
       </div>
       <div class="card-body" style="text-align:center;">
         <button id="btnPlayTone" class="secondary" style="margin:14px 0 18px;">▶ Воспроизвести</button>
+        <audio id="audioCheckEl" preload="metadata"></audio>
+        <p id="audioCheckError" class="audio-error" style="max-width:100%;"></p>
         <p id="audioCheckQuestion" style="display:none; font-weight:600; margin-bottom:14px;">Вы слышите звук?</p>
         <div id="audioCheckButtons" style="display:none; gap:10px; justify-content:center;" class="modal-actions">
           <button class="secondary" id="btnAudioNo">Нет</button>
           <button id="btnAudioYes">Да, перейти к тесту</button>
         </div>
         <p id="audioCheckHelp" style="display:none; font-size:13px; color:var(--color-text-soft); margin-top:14px;">
-          Проверьте громкость устройства и подключение наушников, затем попробуйте снова.
+          Проверьте громкость устройства и подключение наушников, затем нажмите «Воспроизвести» ещё раз.
         </p>
       </div>
     </div>
