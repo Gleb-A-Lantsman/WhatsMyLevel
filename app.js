@@ -79,17 +79,23 @@ document.getElementById('btnWelcomeNext').addEventListener('click', () => {
 // ---------------------------------------------------------------------
 // Screen 3: Audio check
 // ---------------------------------------------------------------------
+const audioCheckEl = document.getElementById('audioCheckEl');
+audioCheckEl.src = TEST_DATA.audioCheck.audioUrl;
+
+audioCheckEl.addEventListener('error', () => {
+  document.getElementById('audioCheckError').style.display = 'block';
+  document.getElementById('audioCheckError').innerHTML =
+    `Не удалось загрузить аудиофайл. Добавьте файл <code>${TEST_DATA.audioCheck.audioUrl}</code>, чтобы проверить звук.`;
+});
+
 document.getElementById('btnPlayTone').addEventListener('click', () => {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    osc.frequency.value = 440;
-    osc.connect(ctx.destination);
-    osc.start();
-    setTimeout(() => { osc.stop(); ctx.close(); }, 600);
-  } catch (err) {
-    console.error('Audio playback error:', err);
-  }
+  document.getElementById('audioCheckError').style.display = 'none';
+  audioCheckEl.currentTime = 0;
+  audioCheckEl.play().catch(() => {
+    document.getElementById('audioCheckError').style.display = 'block';
+    document.getElementById('audioCheckError').innerHTML =
+      `Не удалось загрузить аудиофайл. Добавьте файл <code>${TEST_DATA.audioCheck.audioUrl}</code>, чтобы проверить звук.`;
+  });
   document.getElementById('audioCheckQuestion').style.display = 'block';
   document.getElementById('audioCheckButtons').style.display = 'flex';
 });
