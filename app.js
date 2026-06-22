@@ -26,6 +26,7 @@ const state = {
   modalConfirmFn: null,    // which "advance" function the modal's Далее button should call
 
   muted: false,
+  breakHandle: null,
 
   speakingIndex: 0,
   countdownHandle: null,
@@ -98,6 +99,7 @@ function renderSectionProgress(totalTasks, currentIndex, currentFraction) {
 function expireTest() {
   clearInterval(state.readingTimerHandle);
   clearInterval(state.listeningTimerHandle);
+  clearInterval(state.breakHandle);
   clearInterval(state.countdownHandle);
   clearInterval(state.prepHandle);
   clearInterval(state.speakHandle);
@@ -109,6 +111,37 @@ function expireTest() {
   }
   if (state.micStream) state.micStream.getTracks().forEach(t => t.stop());
   showScreen('screen-test-expired');
+}
+
+// Shows the skippable rest screen between sections. Counts down from
+// TEST_DATA.breakSeconds and calls onContinue() either when the
+// student clicks "skip" or when the break time runs out on its own.
+function showBreak(onContinue) {
+  showScreen('screen-break');
+  let remaining = TEST_DATA.breakSeconds;
+
+  const render = () => {
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    document.getElementById('breakCountdownText').textContent = `Вы отдыхаете: ${m} минут ${s} секунд`;
+  };
+  render();
+
+  clearInterval(state.breakHandle);
+  state.breakHandle = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(state.breakHandle);
+      onContinue();
+      return;
+    }
+    render();
+  }, 1000);
+
+  document.getElementById('btnBreakSkip').onclick = () => {
+    clearInterval(state.breakHandle);
+    onContinue();
+  };
 }
 
 document.getElementById('btnExpiredRestart').addEventListener('click', () => {
@@ -208,7 +241,9 @@ document.getElementById('btnReadingStart').addEventListener('click', () => {
     updateTimerDisplay(state.readingRemaining, TEST_DATA.reading.durationSeconds);
     if (state.readingRemaining <= 0) {
       clearInterval(state.readingTimerHandle);
-      expireTest();
+      // Running out of time submits this section as-is and moves on —
+      // it no longer cancels the whole test (see finishReadingSection).
+      finishReadingSection();
     }
   }, 1000);
   updateTimerDisplay(state.readingRemaining, TEST_DATA.reading.durationSeconds);
@@ -385,7 +420,7 @@ function finishReadingSection() {
 // Listening section
 // ---------------------------------------------------------------------
 document.getElementById('btnGoListening').addEventListener('click', () => {
-  showScreen('screen-listening-intro');
+  showBreak(() => showScreen('screen-listening-intro'));
 });
 
 document.getElementById('btnListeningStart').addEventListener('click', () => {
@@ -403,7 +438,7 @@ document.getElementById('btnListeningStart').addEventListener('click', () => {
     updateTimerDisplay(state.listeningRemaining, TEST_DATA.listening.durationSeconds);
     if (state.listeningRemaining <= 0) {
       clearInterval(state.listeningTimerHandle);
-      expireTest();
+      finishListeningSection();
     }
   }, 1000);
   updateTimerDisplay(state.listeningRemaining, TEST_DATA.listening.durationSeconds);
@@ -510,7 +545,7 @@ function finishListeningSection() {
 }
 
 document.getElementById('btnGoSpeaking').addEventListener('click', () => {
-  showScreen('screen-speaking-intro');
+  showBreak(() => showScreen('screen-speaking-intro'));
 });
 
 // ---- Custom audio player: max two plays, no pausing/seeking mid-play ----
@@ -648,6 +683,16 @@ function startPrep(task) {
 
 async function startRecordingAuto(task) {
   document.getElementById('speakingStatus').innerHTML = '<span class="rec-dot"></span><span class="rec-label">ЗАПИСЬ</span>';
+
+  // Active throughout the answer — clicking it ends the recording early,
+  // instead of forcing the student to wait out the full time limit.
+  const btn = document.getElementById('btnSpeakingNext');
+  btn.disabled = false;
+  btn.textContent = 'Я закончил(а) отвечать!';
+  btn.onclick = () => {
+    clearInterval(state.speakHandle);
+    finishRecording();
+  };
 
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
