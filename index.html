@@ -13,8 +13,15 @@
 <!-- ============================================================ -->
 <div id="topbar">
   <div class="topbar-label"><span id="topbarLabel">Чтение</span></div>
-  <div class="progress-track"><div class="progress-fill" id="topbarProgress"></div></div>
-  <div class="topbar-timer" id="topbarTimer">25:00</div>
+  <div class="progress-track" id="topbarProgress"></div>
+  <div class="topbar-timer">
+    <span id="topbarTimerText">25:00</span>
+    <span class="time-pie" id="timePie"></span>
+  </div>
+  <div class="topbar-controls">
+    <button type="button" class="icon-btn" id="btnVolume" aria-label="Звук" title="Звук">🔊</button>
+    <button type="button" class="icon-btn square" id="btnFullscreen" aria-label="Полный экран" title="Полный экран">⤢</button>
+  </div>
 </div>
 
 <!-- ============================================================ -->
@@ -23,7 +30,7 @@
 <section class="screen active" id="screen-register">
   <div class="register-grid">
     <div class="register-intro">
-      <div class="logo-box">RE</div>
+      <img class="logo-img" src="logo.png" alt="RE Academy">
       <div class="eyebrow">RE-Academy</div>
       <h1>RE-Academy (Royal English)<br>Вступительный тест</h1>
       <p class="sub">Оценка уровня английского языка перед началом подготовки к IELTS</p>
@@ -294,8 +301,9 @@
       </div>
       <div class="card-body">
         <ul>
-          <li>На подготовку к каждому заданию даётся 1 минута.</li>
-          <li>На ответ даётся 2 минуты, запись начнётся автоматически.</li>
+          <li>Каждый вопрос начинается с короткого видео.</li>
+          <li>После видео начнётся 5-секундный отсчёт, а затем запись начнётся автоматически.</li>
+          <li>Для заданий Part 2 перед записью даётся 1 минута на подготовку.</li>
           <li>Для записи понадобится доступ к микрофону — браузер запросит разрешение.</li>
         </ul>
         <div class="card-actions"><button id="btnSpeakingStart">Начать</button></div>
@@ -311,14 +319,13 @@
   <div class="card-screen">
     <div class="speaking-card">
       <div class="speaking-eyebrow" id="speakingPartLabel">Part 1</div>
+      <video id="speakingVideo" class="speaking-video" playsinline></video>
+      <p class="audio-error" id="speakingVideoError" style="max-width:100%;"></p>
       <div class="speaking-prompt" id="speakingPrompt"></div>
-      <div class="speaking-timer" id="speakingTimer">1:00</div>
-      <div class="speaking-status" id="speakingStatus">Нажмите «Начать подготовку», когда будете готовы.</div>
+      <div class="speaking-timer" id="speakingTimer">—</div>
+      <div class="speaking-status" id="speakingStatus">Нажмите «Следующий вопрос», чтобы начать.</div>
       <div class="speaking-actions">
-        <button id="btnPrepStart">Начать подготовку</button>
-        <button id="btnRecordStart" disabled>Записать ответ</button>
-        <button id="btnRecordStop" class="secondary" disabled>Остановить запись</button>
-        <button id="btnSpeakingSubmit" disabled>Отправить ответ</button>
+        <button id="btnSpeakingNext">Следующий вопрос</button>
       </div>
     </div>
   </div>
@@ -339,6 +346,28 @@
           Результаты будут готовы после проверки преподавателем — мы свяжемся с вами по указанному email.
         </p>
         <div class="card-actions"><button id="btnRestart" class="secondary">Пройти заново</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- Screen: Test expired (section time limit exceeded)            -->
+<!-- ============================================================ -->
+<section class="screen" id="screen-test-expired">
+  <div class="card-screen">
+    <div class="card expired-card">
+      <div class="expired-warning">
+        <h1>⚠ Тест отменён</h1>
+        <p>Время, отведённое на этот раздел, истекло, поэтому тестовая сессия была завершена. Ваши ответы не были сохранены.</p>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Каждый раздел теста нужно пройти полностью в течение отведённого времени.</li>
+          <li>Если вы решите пройти тест снова, выделите достаточно времени, чтобы успеть закончить весь раздел без перерыва.</li>
+          <li>Убедитесь, что у вас стабильное интернет-соединение на протяжении всей сессии.</li>
+        </ul>
+        <div class="card-actions"><button id="btnExpiredRestart">Начать заново</button></div>
       </div>
     </div>
   </div>
