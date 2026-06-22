@@ -16,6 +16,14 @@
 const TEST_DATA = {
 
   // ===================================================================
+  // BREAK — optional rest period offered between sections (Reading→
+  // Listening, Listening→Speaking). Students can wait it out or skip
+  // straight to the next section. Change the number below to adjust
+  // how long the break lasts.
+  // ===================================================================
+  breakSeconds: 5 * 60,
+
+  // ===================================================================
   // AUDIO CHECK — plays once before the test starts, on the audio
   // check screen. Drop the converted file at this path (alongside the
   // Listening audio) — same folder, same naming convention.
