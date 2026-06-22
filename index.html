@@ -23,7 +23,12 @@
     <span class="time-pie" id="timePie"></span>
   </div>
   <div class="topbar-controls">
-    <button type="button" class="icon-btn" id="btnVolume" aria-label="Звук" title="Звук">🔊</button>
+    <div class="volume-control">
+      <button type="button" class="icon-btn" id="btnVolume" aria-label="Звук" title="Громкость">🔊</button>
+      <div class="volume-popover" id="volumePopover">
+        <input type="range" id="volumeSlider" min="0" max="100" value="100" aria-label="Громкость">
+      </div>
+    </div>
     <button type="button" class="icon-btn square" id="btnFullscreen" aria-label="Полный экран" title="Полный экран">⤢</button>
   </div>
 </div>
@@ -47,7 +52,7 @@
         <div class="plus">+</div>
         <div class="seg">🎧 Аудирование<strong>25 мин</strong></div>
         <div class="plus">+</div>
-        <div class="seg">🗣️ Говорение<strong>15 мин</strong></div>
+        <div class="seg">🎤 Говорение<strong>15 мин</strong></div>
         <div class="eq">=</div>
         <div class="seg">Итого<strong>65 мин</strong></div>
       </div>
@@ -63,6 +68,7 @@
       <div class="about-block">
         <h3>О тесте RE-Academy</h3>
         <p>Это короткий вступительный тест из трёх частей — чтение, аудирование и говорение. Он помогает преподавателям RE-Academy подобрать подходящий уровень и программу подготовки к IELTS.</p>
+        <p>Сделать паузу можно только между разделами теста — внутри раздела остановить тест нельзя.</p>
       </div>
     </div>
 
@@ -135,14 +141,14 @@
       <div class="card-icons">
         <div class="card-icon"><div class="icon-circle">📖</div>Чтение<br>25 мин</div>
         <div class="card-icon"><div class="icon-circle">🎧</div>Аудирование<br>25 мин</div>
-        <div class="card-icon"><div class="icon-circle">🗣️</div>Говорение<br>15 мин</div>
+        <div class="card-icon"><div class="icon-circle">🎤</div>Говорение<br>15 мин</div>
       </div>
       <div class="card-body">
         <ul>
-          <li>Выделите на тест достаточно времени — поставить его на паузу после начала будет нельзя.</li>
+          <li>Выделите на тест достаточно времени. Сделать паузу можно только между разделами — внутри раздела остановить тест нельзя.</li>
           <li>Тест можно пройти только один раз, потренироваться на нём не получится.</li>
           <li>Баллы не снимаются за пропущенные или неверные ответы.</li>
-          <li>После отправки ответа вернуться к вопросу будет нельзя.</li>
+          <li>После отправки ответов на вопросы к каждому заданию их нельзя исправить.</li>
         </ul>
         <div class="card-actions"><button id="btnWelcomeNext">Далее</button></div>
       </div>
@@ -193,7 +199,7 @@
       <div class="card-body">
         <ul>
           <li>За неправильные ответы баллы не снимаются.</li>
-          <li>После отправки ответа вернуться к вопросу будет нельзя.</li>
+          <li>После отправки ответов на вопросы к каждому тексту их нельзя исправить.</li>
         </ul>
         <div class="card-actions"><button id="btnReadingStart">Начать</button></div>
       </div>
@@ -213,39 +219,21 @@
 </section>
 
 <!-- ============================================================ -->
-<!-- Screen: Break between sections (optional, skippable)          -->
 <!-- ============================================================ -->
-<section class="screen" id="screen-break">
-  <div class="card-screen">
-    <div class="card">
-      <div class="card-header">
-        <h1>Перерыв</h1>
-        <p>Можете отдохнуть перед следующим разделом — или пропустить перерыв.</p>
-      </div>
-      <div class="card-body" style="text-align:center;">
-        <p class="break-countdown" id="breakCountdownText">Вы отдыхаете: 5 минут 0 секунд</p>
-        <div class="card-actions"><button id="btnBreakSkip">Пропустить перерыв и продолжить</button></div>
-      </div>
-    </div>
-  </div>
-</section>
-
+<!-- Screen: Section complete + break (shown after Reading and    -->
+<!-- after Listening — rendered dynamically by app.js)             -->
 <!-- ============================================================ -->
-<!-- Screen 6: Reading complete                                    -->
-<!-- ============================================================ -->
-<section class="screen" id="screen-reading-complete">
+<section class="screen" id="screen-section-complete">
   <div class="card-screen">
     <div class="card">
       <div class="card-header">
         <h1>Отличная работа!</h1>
-        <p>Вы переходите к разделу аудирования</p>
+        <p id="sectionCompleteSubtitle">Вы завершили раздел</p>
       </div>
-      <div class="card-icons">
-        <div class="card-icon done"><div class="icon-circle">✓</div>Чтение</div>
-        <div class="card-icon"><div class="icon-circle">🎧</div>Аудирование<br>25 мин</div>
-      </div>
-      <div class="card-body">
-        <div class="card-actions"><button id="btnGoListening">Перейти к следующему разделу</button></div>
+      <div class="card-icons" id="sectionCompleteIcons"></div>
+      <div class="card-body" style="text-align:center;">
+        <p class="break-countdown" id="breakCountdownText">Вы отдыхаете: 5 минут 0 секунд</p>
+        <div class="card-actions"><button id="btnSectionContinue">Пропустить перерыв и продолжить</button></div>
       </div>
     </div>
   </div>
@@ -268,7 +256,7 @@
         <ul>
           <li>Каждую запись можно прослушать дважды.</li>
           <li>Во время воспроизведения остановить запись нельзя — рекомендуем прочитать вопросы заранее.</li>
-          <li>После отправки ответа вернуться к вопросу будет нельзя.</li>
+          <li>После отправки ответов на вопросы к каждой записи их нельзя исправить.</li>
         </ul>
         <div class="card-actions"><button id="btnListeningStart">Начать</button></div>
       </div>
@@ -288,27 +276,6 @@
 </section>
 
 <!-- ============================================================ -->
-<!-- Screen 8b: Listening complete                                 -->
-<!-- ============================================================ -->
-<section class="screen" id="screen-listening-complete">
-  <div class="card-screen">
-    <div class="card">
-      <div class="card-header">
-        <h1>Отличная работа!</h1>
-        <p>Вы завершили раздел аудирования</p>
-      </div>
-      <div class="card-icons">
-        <div class="card-icon done"><div class="icon-circle">✓</div>Чтение<br>25 минут</div>
-        <div class="card-icon done"><div class="icon-circle">✓</div>Аудирование<br>25 минут</div>
-      </div>
-      <div class="card-body">
-        <div class="card-actions"><button id="btnGoSpeaking">Перейти к следующему разделу</button></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============================================================ -->
 <!-- Screen 9: Speaking section intro                              -->
 <!-- ============================================================ -->
 <section class="screen" id="screen-speaking-intro">
@@ -319,7 +286,7 @@
         <p>Вы переходите к разделу говорения</p>
       </div>
       <div class="card-icons">
-        <div class="card-icon"><div class="icon-circle">🗣️</div>Говорение<br>15 мин</div>
+        <div class="card-icon"><div class="icon-circle">🎤</div>Говорение<br>15 мин</div>
       </div>
       <div class="card-body">
         <ul>
