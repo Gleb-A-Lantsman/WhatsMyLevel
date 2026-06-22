@@ -53,13 +53,16 @@ audio/listening-3.mp3
 
 ## Adding your Speaking videos
 
-The Speaking section follows the real IELTS format: pressing **Следующий вопрос** plays a video automatically, then a 5-second countdown runs, then — for Part 2 questions only — a 1-minute prep period, then recording starts automatically (the REC indicator lights up). The button stays active and changes to **"Я закончил(а) отвечать!"** for the whole recording — clicking it ends the answer early instead of forcing the student to wait out the full time limit. The Speaking section now runs ~15 minutes total, matching the real IELTS timing.
+The Speaking section runs as 15 individual questions across 4 topics (Part 1: "Your city" + "Weekends", Part 2: cue card, Part 3: "Skills and abilities" + "Salaries for skilled people") — all real content now, not placeholders. The header above each question shows "Part N / Topic" throughout (e.g. "Part 2 / Someone you know who does something well"), and the question text is shown on screen alongside the video.
+
+Pressing **Следующий вопрос** on the first question plays its video, then a 5-second countdown, then (Part 2 only) a 1-minute prep, then recording starts automatically. The button stays active during recording and reads **"Я закончил(а) отвечать!"** — clicking it (or letting the timer run out) immediately moves to the next question and starts its video, no extra click needed.
 
 Drop your videos into a `video/` folder next to `index.html`, named:
 
 ```
-video/speaking-1.mp4
-video/speaking-2.mp4
+video/video1-1.mp4 … video/video1-8.mp4   (Part 1, 8 questions)
+video/video2-1.mp4                         (Part 2, 1 question)
+video/video3-1.mp4 … video/video3-6.mp4   (Part 3, 6 questions)
 ```
 
 (Edit `videoUrl` in `data.js` for each task if you'd rather name them differently.) Same as the audio files — if one's missing, the app shows an inline note and still moves the flow along so you can keep testing.
@@ -72,7 +75,7 @@ The progress bar in the top panel is split into one segment per task in the curr
 
 ## Breaks between sections
 
-After Reading and after Listening, students land on a skippable rest screen ("Вы отдыхаете: X минут Y секунд") before the next section's intro. Change how long it lasts by editing `breakSeconds` at the top of `data.js` (currently 5 minutes). Clicking "Пропустить перерыв и продолжить" jumps straight to the next section.
+After Reading and after Listening, students land on a single screen that both confirms the section is done (showing all 3 sections with a checkmark on whatever's finished) and offers a skippable rest period ("Вы отдыхаете: X минут Y секунд") before the next section's intro — there's no separate click-through step anymore. Change how long the break lasts by editing `breakSeconds` at the top of `data.js` (currently 5 minutes).
 
 ## What happens if time runs out
 
