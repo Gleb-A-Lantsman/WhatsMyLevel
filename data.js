@@ -16,6 +16,15 @@
 const TEST_DATA = {
 
   // ===================================================================
+  // AUDIO CHECK — plays once before the test starts, on the audio
+  // check screen. Drop the converted file at this path (alongside the
+  // Listening audio) — same folder, same naming convention.
+  // ===================================================================
+  audioCheck: {
+    audioUrl: 'audio/audio-check.mp3'
+  },
+
+  // ===================================================================
   // READING — 25 minutes, 3 tasks
   // ===================================================================
   reading: {
