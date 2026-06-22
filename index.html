@@ -1,217 +1,362 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IELTS Speaking Practice</title>
-    <style>
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
-        }
-        .container {
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .task-section {
-            margin: 20px 0;
-            padding: 20px;
-            background: #f5f5f5;
-            border-radius: 8px;
-        }
-        .timer {
-            font-size: 24px;
-            font-weight: bold;
-            margin: 20px 0;
-            color: #2563eb;
-        }
-        button {
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            margin: 5px;
-        }
-        button:disabled {
-            background: #93c5fd;
-            cursor: not-allowed;
-        }
-        .task-content {
-            margin: 20px 0;
-            padding: 15px;
-            background: white;
-            border-radius: 4px;
-            border: 1px solid #e5e7eb;
-        }
-        input {
-            margin: 5px;
-            padding: 8px;
-            border: 1px solid #e5e7eb;
-            border-radius: 4px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RE-Academy — Вступительный тест</title>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>IELTS Speaking Practice</h1>
-        
-        <div class="user-info">
-            <h2>User Information</h2>
-            <input type="text" id="userName" placeholder="Full Name" required>
-            <input type="number" id="userAge" placeholder="Age" required min="16" max="100">
-        </div>
-        
-        <div class="task-section">
-            <h2>Current Task</h2>
-            <div id="taskContent" class="task-content"></div>
-            <div id="timer" class="timer">Preparation: 1:00</div>
-            
-            <button id="startBtn">Start Task</button>
-            <button id="recordBtn" disabled>Record Response</button>
-            <button id="stopBtn" disabled>Stop Recording</button>
-            <button id="submitBtn" disabled>Submit Response</button>
-        </div>
 
-        <div id="report" class="report" style="display: none">
-            <h2>IELTS Speaking Test Report</h2>
-            <div id="reportContent"></div>
-        </div>
+<!-- ============================================================ -->
+<!-- Top status bar: label / progress bar / countdown timer       -->
+<!-- ============================================================ -->
+<div id="topbar">
+  <div class="topbar-label"><span id="topbarLabel">Чтение</span></div>
+  <div class="progress-track"><div class="progress-fill" id="topbarProgress"></div></div>
+  <div class="topbar-timer" id="topbarTimer">25:00</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- Screen 1: Registration                                        -->
+<!-- ============================================================ -->
+<section class="screen active" id="screen-register">
+  <div class="register-grid">
+    <div class="register-intro">
+      <div class="logo-box">RE</div>
+      <div class="eyebrow">RE-Academy</div>
+      <h1>RE-Academy (Royal English)<br>Вступительный тест</h1>
+      <p class="sub">Оценка уровня английского языка перед началом подготовки к IELTS</p>
+
+      <div class="duration-pill">Оценка английского языка</div>
+      <div class="duration-big">60 <span>минут</span></div>
+
+      <div class="icon-row">
+        <div class="seg">📖 Чтение<strong>25 мин</strong></div>
+        <div class="plus">+</div>
+        <div class="seg">🎧 Аудирование<strong>25 мин</strong></div>
+        <div class="plus">+</div>
+        <div class="seg">🗣️ Говорение<strong>10 мин</strong></div>
+        <div class="eq">=</div>
+        <div class="seg">Итого<strong>60 мин</strong></div>
+      </div>
+
+      <div class="checklist-title">Прежде чем начать, убедитесь:</div>
+      <ol class="checklist">
+        <li>Динамики или наушники на вашем устройстве работают.</li>
+        <li>Интернет-соединение стабильное.</li>
+        <li>Тест лучше проходить в браузере Chrome.</li>
+        <li>Мессенджеры, почта и другие программы закрыты, чтобы не отвлекаться.</li>
+      </ol>
+
+      <div class="about-block">
+        <h3>О тесте RE-Academy</h3>
+        <p>Это короткий вступительный тест из трёх частей — чтение, аудирование и говорение. Он помогает преподавателям RE-Academy подобрать подходящий уровень и программу подготовки к IELTS.</p>
+      </div>
     </div>
 
-<script>
-// Define tasks first
-const tasks = [
-    {
-        part: 1,
-        question: `Let me ask you about your home town or city.
+    <div class="register-form-pane">
+      <form class="register-form" id="registerForm" novalidate>
+        <h2>Ваши данные</h2>
 
-- What kind of place is it?
-- What do you like most about it?
-- What kinds of jobs do the people in your town/city do?
-- Would you say it's a good place to live? (Why?)`
-    },
-    {
-        part: 2,
-        question: `Describe a skill you would like to learn in the future.
+        <div class="field">
+          <label for="fName">Имя *</label>
+          <input id="fName" name="fName" required placeholder="Имя">
+        </div>
+        <div class="field">
+          <label for="fLastName">Фамилия *</label>
+          <input id="fLastName" name="fLastName" required placeholder="Фамилия">
+        </div>
+        <div class="field">
+          <label for="fEmail">Email *</label>
+          <input id="fEmail" name="fEmail" type="email" required placeholder="you@example.com">
+        </div>
+        <div class="field">
+          <label for="fCountry">Страна проживания *</label>
+          <select id="fCountry" name="fCountry" required>
+            <option value="" disabled selected>Выберите страну</option>
+            <option>Россия</option>
+            <option>Казахстан</option>
+            <option>Беларусь</option>
+            <option>Великобритания</option>
+            <option>Другая</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fYear">Год рождения (ГГГГ) *</label>
+          <input id="fYear" name="fYear" type="number" min="1940" max="2015" required placeholder="1998">
+        </div>
+        <div class="field">
+          <label for="fCity">Город *</label>
+          <input id="fCity" name="fCity" required placeholder="Город">
+        </div>
+        <div class="field">
+          <label for="fGender">Пол *</label>
+          <select id="fGender" name="fGender" required>
+            <option value="" disabled selected>Выберите</option>
+            <option>Женский</option>
+            <option>Мужской</option>
+            <option>Предпочитаю не указывать</option>
+          </select>
+        </div>
 
-You should say:
-- what the skill is
-- when you want to learn it
-- how you will learn it
-- and explain why you want to learn this skill`
-    }
-];
+        <label class="consent-row">
+          <input type="checkbox" required>
+          <span>Я согласен(на) на обработку моих персональных данных в соответствии с политикой конфиденциальности RE-Academy.</span>
+        </label>
 
-// Initialize variables
-let currentTaskIndex = 0;
-let mediaRecorder;
-let audioChunks = [];
-let timer;
-let remainingTime;
+        <button type="submit">Отправить</button>
+      </form>
+    </div>
+  </div>
+</section>
 
-// Get DOM elements
-const startBtn = document.getElementById('startBtn');
-const recordBtn = document.getElementById('recordBtn');
-const stopBtn = document.getElementById('stopBtn');
-const submitBtn = document.getElementById('submitBtn');
-const timerDisplay = document.getElementById('timer');
-const taskContent = document.getElementById('taskContent');
+<!-- ============================================================ -->
+<!-- Screen 2: Welcome / rules                                     -->
+<!-- ============================================================ -->
+<section class="screen" id="screen-welcome">
+  <div class="card-screen">
+    <div class="card">
+      <div class="card-header">
+        <h1>Добро пожаловать</h1>
+        <p>Вы начинаете вступительный тест RE-Academy</p>
+      </div>
+      <div class="card-icons">
+        <div class="card-icon"><div class="icon-circle">📖</div>Чтение<br>25 мин</div>
+        <div class="card-icon"><div class="icon-circle">🎧</div>Аудирование<br>25 мин</div>
+        <div class="card-icon"><div class="icon-circle">🗣️</div>Говорение<br>~10 мин</div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Выделите на тест достаточно времени — поставить его на паузу после начала будет нельзя.</li>
+          <li>Тест можно пройти только один раз, потренироваться на нём не получится.</li>
+          <li>Баллы не снимаются за пропущенные или неверные ответы.</li>
+          <li>После отправки ответа вернуться к вопросу будет нельзя.</li>
+        </ul>
+        <div class="card-actions"><button id="btnWelcomeNext">Далее</button></div>
+      </div>
+    </div>
+  </div>
+</section>
 
-// Define displayTask function
-function displayTask(index) {
-    const task = tasks[index];
-    taskContent.innerText = task.question;
-}
+<!-- ============================================================ -->
+<!-- Screen 3: Audio check                                         -->
+<!-- ============================================================ -->
+<section class="screen" id="screen-audio">
+  <div class="card-screen">
+    <div class="card">
+      <div class="card-header">
+        <h1>Проверка звука</h1>
+        <p>Перед началом убедитесь, что звук работает корректно.</p>
+      </div>
+      <div class="card-body" style="text-align:center;">
+        <button id="btnPlayTone" class="secondary" style="margin:14px 0 18px;">▶ Воспроизвести</button>
+        <p id="audioCheckQuestion" style="display:none; font-weight:600; margin-bottom:14px;">Вы слышите звук?</p>
+        <div id="audioCheckButtons" style="display:none; gap:10px; justify-content:center;" class="modal-actions">
+          <button class="secondary" id="btnAudioNo">Нет</button>
+          <button id="btnAudioYes">Да, перейти к тесту</button>
+        </div>
+        <p id="audioCheckHelp" style="display:none; font-size:13px; color:var(--color-text-soft); margin-top:14px;">
+          Проверьте громкость устройства и подключение наушников, затем попробуйте снова.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
 
-// Initialize first task
-displayTask(currentTaskIndex);
+<!-- ============================================================ -->
+<!-- Screen 4: Reading section intro                               -->
+<!-- ============================================================ -->
+<section class="screen" id="screen-reading-intro">
+  <div class="card-screen">
+    <div class="card">
+      <div class="card-header">
+        <h1>Чтение</h1>
+        <p>Вы переходите к разделу чтения</p>
+      </div>
+      <div class="card-icons">
+        <div class="card-icon"><div class="icon-circle">📖</div>Чтение<br>25 мин</div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>За неправильные ответы баллы не снимаются.</li>
+          <li>После отправки ответа вернуться к вопросу будет нельзя.</li>
+        </ul>
+        <div class="card-actions"><button id="btnReadingStart">Начать</button></div>
+      </div>
+    </div>
+  </div>
+</section>
 
-// Timer function
-function updateTimer(seconds) {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    timerDisplay.textContent = `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-}
+<!-- ============================================================ -->
+<!-- Screen 5: Reading task (rendered dynamically by app.js)       -->
+<!-- ============================================================ -->
+<section class="screen" id="screen-reading-task">
+  <div class="task-layout">
+    <div class="pane pane-passage" id="readingPassagePane"></div>
+    <div class="pane pane-questions" id="readingQuestionsPane"></div>
+    <div class="dot-rail" id="readingDotRail"></div>
+  </div>
+</section>
 
-function startTimer(duration, type) {
-    remainingTime = duration;
-    updateTimer(remainingTime);
-    
-    timer = setInterval(() => {
-        remainingTime--;
-        updateTimer(remainingTime);
-        
-        if (remainingTime <= 0) {
-            clearInterval(timer);
-            if (type === 'prep') {
-                timerDisplay.textContent = 'Start Speaking!';
-                recordBtn.disabled = false;
-                startBtn.disabled = true;
-            } else if (type === 'speaking') {
-                stopRecording();
-            }
-        }
-    }, 1000);
-}
+<!-- ============================================================ -->
+<!-- Screen 6: Reading complete                                    -->
+<!-- ============================================================ -->
+<section class="screen" id="screen-reading-complete">
+  <div class="card-screen">
+    <div class="card">
+      <div class="card-header">
+        <h1>Отличная работа!</h1>
+        <p>Вы переходите к разделу аудирования</p>
+      </div>
+      <div class="card-icons">
+        <div class="card-icon done"><div class="icon-circle">✓</div>Чтение</div>
+        <div class="card-icon"><div class="icon-circle">🎧</div>Аудирование<br>25 мин</div>
+      </div>
+      <div class="card-body">
+        <div class="card-actions"><button id="btnGoListening">Перейти к следующему разделу</button></div>
+      </div>
+    </div>
+  </div>
+</section>
 
-// Event Listeners
-startBtn.addEventListener('click', () => {
-    if (!document.getElementById('userName').value || !document.getElementById('userAge').value) {
-        alert('Please fill in your name and age before starting the test.');
-        return;
-    }
-    startTimer(60, 'prep'); // 60 seconds preparation time
-    startBtn.disabled = true;
-});
+<!-- ============================================================ -->
+<!-- Screen 7: Listening section intro                             -->
+<!-- ============================================================ -->
+<section class="screen" id="screen-listening-intro">
+  <div class="card-screen">
+    <div class="card">
+      <div class="card-header">
+        <h1>Аудирование</h1>
+        <p>Вы переходите к разделу аудирования</p>
+      </div>
+      <div class="card-icons">
+        <div class="card-icon"><div class="icon-circle">🎧</div>Аудирование<br>25 мин</div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Каждую запись можно прослушать дважды.</li>
+          <li>Во время воспроизведения остановить запись нельзя — рекомендуем прочитать вопросы заранее.</li>
+          <li>После отправки ответа вернуться к вопросу будет нельзя.</li>
+        </ul>
+        <div class="card-actions"><button id="btnListeningStart">Начать</button></div>
+      </div>
+    </div>
+  </div>
+</section>
 
-recordBtn.addEventListener('click', async () => {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-        
-        mediaRecorder.addEventListener('dataavailable', event => {
-            audioChunks.push(event.data);
-        });
+<!-- ============================================================ -->
+<!-- Screen 8: Listening task (rendered dynamically by app.js)    -->
+<!-- ============================================================ -->
+<section class="screen" id="screen-listening-task">
+  <div class="task-layout">
+    <div class="pane pane-passage" id="listeningPassagePane"></div>
+    <div class="pane pane-questions" id="listeningQuestionsPane"></div>
+    <div class="dot-rail" id="listeningDotRail"></div>
+  </div>
+</section>
 
-        mediaRecorder.addEventListener('stop', () => {
-            submitBtn.disabled = false;
-        });
+<!-- ============================================================ -->
+<!-- Screen 8b: Listening complete                                 -->
+<!-- ============================================================ -->
+<section class="screen" id="screen-listening-complete">
+  <div class="card-screen">
+    <div class="card">
+      <div class="card-header">
+        <h1>Отличная работа!</h1>
+        <p>Вы завершили раздел аудирования</p>
+      </div>
+      <div class="card-icons">
+        <div class="card-icon done"><div class="icon-circle">✓</div>Чтение<br>25 минут</div>
+        <div class="card-icon done"><div class="icon-circle">✓</div>Аудирование<br>25 минут</div>
+      </div>
+      <div class="card-body">
+        <div class="card-actions"><button id="btnGoSpeaking">Перейти к следующему разделу</button></div>
+      </div>
+    </div>
+  </div>
+</section>
 
-        audioChunks = [];
-        mediaRecorder.start();
-        recordBtn.disabled = true;
-        stopBtn.disabled = false;
-        startTimer(120, 'speaking'); // 2 minutes speaking time
-    } catch (err) {
-        console.error('Error accessing microphone:', err);
-        alert('Error accessing microphone. Please ensure you have granted microphone permissions.');
-    }
-});
+<!-- ============================================================ -->
+<!-- Screen 9: Speaking section intro                              -->
+<!-- ============================================================ -->
+<section class="screen" id="screen-speaking-intro">
+  <div class="card-screen">
+    <div class="card">
+      <div class="card-header">
+        <h1>Говорение</h1>
+        <p>Вы переходите к разделу говорения</p>
+      </div>
+      <div class="card-icons">
+        <div class="card-icon"><div class="icon-circle">🗣️</div>Говорение<br>~10 мин</div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>На подготовку к каждому заданию даётся 1 минута.</li>
+          <li>На ответ даётся 2 минуты, запись начнётся автоматически.</li>
+          <li>Для записи понадобится доступ к микрофону — браузер запросит разрешение.</li>
+        </ul>
+        <div class="card-actions"><button id="btnSpeakingStart">Начать</button></div>
+      </div>
+    </div>
+  </div>
+</section>
 
-stopBtn.addEventListener('click', stopRecording);
+<!-- ============================================================ -->
+<!-- Screen 10: Speaking task (rendered dynamically by app.js)     -->
+<!-- ============================================================ -->
+<section class="screen" id="screen-speaking-task">
+  <div class="card-screen">
+    <div class="speaking-card">
+      <div class="speaking-eyebrow" id="speakingPartLabel">Part 1</div>
+      <div class="speaking-prompt" id="speakingPrompt"></div>
+      <div class="speaking-timer" id="speakingTimer">1:00</div>
+      <div class="speaking-status" id="speakingStatus">Нажмите «Начать подготовку», когда будете готовы.</div>
+      <div class="speaking-actions">
+        <button id="btnPrepStart">Начать подготовку</button>
+        <button id="btnRecordStart" disabled>Записать ответ</button>
+        <button id="btnRecordStop" class="secondary" disabled>Остановить запись</button>
+        <button id="btnSpeakingSubmit" disabled>Отправить ответ</button>
+      </div>
+    </div>
+  </div>
+</section>
 
-function stopRecording() {
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-        mediaRecorder.stop();
-        clearInterval(timer);
-        stopBtn.disabled = true;
-        timerDisplay.textContent = 'Recording complete';
-    }
-}
+<!-- ============================================================ -->
+<!-- Screen 11: Finish                                             -->
+<!-- ============================================================ -->
+<section class="screen" id="screen-finish">
+  <div class="card-screen">
+    <div class="card">
+      <div class="card-header">
+        <h1>Тест завершён!</h1>
+        <p>Спасибо, что прошли вступительный тест RE-Academy.</p>
+      </div>
+      <div class="card-body">
+        <p style="color:var(--color-text-soft); font-size:14.5px; margin-bottom:22px;">
+          Результаты будут готовы после проверки преподавателем — мы свяжемся с вами по указанному email.
+        </p>
+        <div class="card-actions"><button id="btnRestart" class="secondary">Пройти заново</button></div>
+      </div>
+    </div>
+  </div>
+</section>
 
-submitBtn.addEventListener('click', async () => {
-    // Implementation for submitting recording
-    // This will be implemented when we add the OpenAI API integration
-    alert('Response submitted! This is a placeholder - API integration will be added later.');
-});
-</script>
+<!-- ============================================================ -->
+<!-- Modal: unanswered questions                                   -->
+<!-- ============================================================ -->
+<div class="modal-overlay" id="unansweredModal">
+  <div class="modal-box">
+    <h3>Перейти к следующему заданию?</h3>
+    <p>Вы не ответили на некоторые вопросы. Нажмите «Назад», чтобы ответить на вопросы, или «Далее», чтобы продолжить.</p>
+    <div class="modal-actions">
+      <button class="secondary" id="btnModalBack">Назад</button>
+      <button id="btnModalNext">Далее</button>
+    </div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
