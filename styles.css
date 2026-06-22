@@ -444,6 +444,14 @@ input:invalid:not(:placeholder-shown) { border-color: var(--color-danger); }
 .modal-actions { display: flex; gap: 10px; }
 .modal-actions button { flex: 1; }
 
+.break-countdown {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+  margin: 8px 0 26px;
+}
+
 /* ---------------------------------------------------------------- */
 /* Listening empty-state                                            */
 /* ---------------------------------------------------------------- */
