@@ -26,6 +26,7 @@ const state = {
   modalConfirmFn: null,    // which "advance" function the modal's Далее button should call
 
   muted: false,
+  volume: 1,
   breakHandle: null,
 
   speakingIndex: 0,
@@ -50,6 +51,7 @@ function formatTime(totalSeconds) {
 }
 
 function showScreen(id) {
+  document.querySelectorAll('audio, video').forEach(el => { try { el.pause(); } catch (e) {} });
   document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   document.getElementById('topbar').classList.remove('visible');
@@ -113,19 +115,39 @@ function expireTest() {
   showScreen('screen-test-expired');
 }
 
-// Shows the skippable rest screen between sections. Counts down from
-// TEST_DATA.breakSeconds and calls onContinue() either when the
-// student clicks "skip" or when the break time runs out on its own.
-function showBreak(onContinue) {
-  showScreen('screen-break');
-  let remaining = TEST_DATA.breakSeconds;
+// The 3 sections in test order — used to render the "where am I"
+// icon row on the section-complete/break screen below.
+const ALL_SECTIONS = [
+  { label: 'Чтение', icon: '📖' },
+  { label: 'Аудирование', icon: '🎧' },
+  { label: 'Говорение', icon: '🎤' }
+];
 
-  const render = () => {
+function renderSectionIcons(doneCount) {
+  const container = document.getElementById('sectionCompleteIcons');
+  container.innerHTML = ALL_SECTIONS.map((s, i) => {
+    const isDone = i < doneCount;
+    return `<div class="card-icon${isDone ? ' done' : ''}"><div class="icon-circle">${isDone ? '✓' : s.icon}</div>${s.label}</div>`;
+  }).join('');
+}
+
+// One screen that both confirms a section is finished AND offers the
+// (skippable) break before the next one — replaces the old separate
+// "Отличная работа" + "Перерыв" screens so position-in-test is always
+// shown consistently, with all 3 sections visible every time.
+function showSectionComplete(doneCount, nextLabel, onContinue) {
+  showScreen('screen-section-complete');
+  document.getElementById('sectionCompleteSubtitle').textContent =
+    `Вы завершили раздел «${ALL_SECTIONS[doneCount - 1].label}»`;
+  renderSectionIcons(doneCount);
+
+  let remaining = TEST_DATA.breakSeconds;
+  const renderCountdown = () => {
     const m = Math.floor(remaining / 60);
     const s = remaining % 60;
     document.getElementById('breakCountdownText').textContent = `Вы отдыхаете: ${m} минут ${s} секунд`;
   };
-  render();
+  renderCountdown();
 
   clearInterval(state.breakHandle);
   state.breakHandle = setInterval(() => {
@@ -135,10 +157,12 @@ function showBreak(onContinue) {
       onContinue();
       return;
     }
-    render();
+    renderCountdown();
   }, 1000);
 
-  document.getElementById('btnBreakSkip').onclick = () => {
+  const btn = document.getElementById('btnSectionContinue');
+  btn.textContent = `Пропустить перерыв и перейти к разделу «${nextLabel}»`;
+  btn.onclick = () => {
     clearInterval(state.breakHandle);
     onContinue();
   };
@@ -151,13 +175,32 @@ document.getElementById('btnExpiredRestart').addEventListener('click', () => {
 // ---------------------------------------------------------------------
 // Topbar controls: volume + fullscreen
 // ---------------------------------------------------------------------
-document.getElementById('btnVolume').addEventListener('click', () => {
-  state.muted = !state.muted;
-  document.querySelectorAll('audio, video').forEach(el => { el.muted = state.muted; });
+function applyVolume(vol) {
+  state.volume = vol;
+  document.querySelectorAll('audio, video').forEach(el => { el.volume = vol; });
   const btn = document.getElementById('btnVolume');
-  btn.textContent = state.muted ? '🔇' : '🔊';
-  btn.classList.toggle('muted', state.muted);
-  btn.title = state.muted ? 'Включить звук' : 'Выключить звук';
+  if (vol <= 0) {
+    btn.textContent = '🔇';
+    btn.classList.add('muted');
+  } else {
+    btn.textContent = vol < 0.5 ? '🔉' : '🔊';
+    btn.classList.remove('muted');
+  }
+}
+
+document.getElementById('btnVolume').addEventListener('click', (e) => {
+  e.stopPropagation();
+  document.getElementById('volumePopover').classList.toggle('visible');
+});
+
+document.getElementById('volumeSlider').addEventListener('input', (e) => {
+  applyVolume(Number(e.target.value) / 100);
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.volume-control')) {
+    document.getElementById('volumePopover').classList.remove('visible');
+  }
 });
 
 document.getElementById('btnFullscreen').addEventListener('click', () => {
@@ -196,6 +239,7 @@ document.getElementById('btnWelcomeNext').addEventListener('click', () => {
 // ---------------------------------------------------------------------
 const audioCheckEl = document.getElementById('audioCheckEl');
 audioCheckEl.src = TEST_DATA.audioCheck.audioUrl;
+audioCheckEl.volume = state.volume;
 
 audioCheckEl.addEventListener('error', () => {
   document.getElementById('audioCheckError').style.display = 'block';
@@ -256,7 +300,11 @@ function renderReadingTask(index) {
   const task = TEST_DATA.reading.tasks[index];
 
   // ---- Left pane: instructions + passage(s) ----
-  let passageHtml = `<p class="task-instructions">${task.instructions}</p>`;
+  let passageHtml = '';
+  if (task.partLabel) {
+    passageHtml += `<span class="passage-label">${escapeHtml(task.partLabel)}</span>`;
+  }
+  passageHtml += `<p class="task-instructions">${task.instructions}</p>`;
   if (task.instructionList) {
     passageHtml += '<ul>' + task.instructionList.map(i => `<li>${i}</li>`).join('') + '</ul>';
   }
@@ -413,16 +461,12 @@ document.getElementById('btnModalNext').addEventListener('click', () => {
 function finishReadingSection() {
   clearInterval(state.readingTimerHandle);
   if (state.readingDotObserver) state.readingDotObserver.disconnect();
-  showScreen('screen-reading-complete');
+  showSectionComplete(1, 'Аудирование', () => showScreen('screen-listening-intro'));
 }
 
 // ---------------------------------------------------------------------
 // Listening section
 // ---------------------------------------------------------------------
-document.getElementById('btnGoListening').addEventListener('click', () => {
-  showBreak(() => showScreen('screen-listening-intro'));
-});
-
 document.getElementById('btnListeningStart').addEventListener('click', () => {
   state.listeningTaskIndex = 0;
   state.listeningAnswers = {};
@@ -446,6 +490,12 @@ document.getElementById('btnListeningStart').addEventListener('click', () => {
 
 function renderListeningTask(index) {
   const task = TEST_DATA.listening.tasks[index];
+
+  // The previous task's <audio> element is about to be destroyed by the
+  // innerHTML rebuild below — pause it first so it doesn't keep playing
+  // in the background after it's gone from the DOM.
+  const oldAudio = document.querySelector('#listeningPassagePane audio');
+  if (oldAudio) oldAudio.pause();
 
   // ---- Left pane: instructions + custom audio player ----
   const instructionsHtml = task.instructions.replace('{{TWO}}', '<span class="badge-two">TWO</span>');
@@ -541,12 +591,8 @@ function doAdvanceListeningTask() {
 function finishListeningSection() {
   clearInterval(state.listeningTimerHandle);
   if (state.listeningDotObserver) state.listeningDotObserver.disconnect();
-  showScreen('screen-listening-complete');
+  showSectionComplete(2, 'Говорение', () => showScreen('screen-speaking-intro'));
 }
-
-document.getElementById('btnGoSpeaking').addEventListener('click', () => {
-  showBreak(() => showScreen('screen-speaking-intro'));
-});
 
 // ---- Custom audio player: max two plays, no pausing/seeking mid-play ----
 function setupAudioPlayer(task) {
@@ -556,6 +602,8 @@ function setupAudioPlayer(task) {
   const timeEl = document.getElementById(`audioTime-${task.id}`);
   const errorEl = document.getElementById(`audioError-${task.id}`);
   let remaining = 2;
+
+  audio.volume = state.volume;
 
   const fmt = (t) => (isFinite(t) ? formatTime(t) : '0:00');
 
@@ -601,14 +649,14 @@ document.getElementById('btnSpeakingStart').addEventListener('click', () => {
 function renderSpeakingTask(index) {
   const task = TEST_DATA.speaking.tasks[index];
 
-  document.getElementById('speakingPartLabel').textContent = `Part ${task.part}`;
+  document.getElementById('speakingPartLabel').textContent = `Part ${task.part} / ${task.topic}`;
   document.getElementById('speakingPrompt').textContent = task.prompt;
   document.getElementById('speakingTimer').textContent = '—';
   document.getElementById('speakingStatus').textContent = 'Нажмите «Следующий вопрос», чтобы начать.';
 
   const video = document.getElementById('speakingVideo');
   video.src = task.videoUrl;
-  video.muted = state.muted;
+  video.volume = state.volume;
   video.style.display = 'none';
   document.getElementById('speakingVideoError').style.display = 'none';
 
@@ -732,11 +780,15 @@ function finishRecording() {
   document.getElementById('speakingStatus').textContent = 'Запись завершена.';
   document.getElementById('speakingTimer').textContent = '—';
 
-  const isLast = state.speakingIndex >= TEST_DATA.speaking.tasks.length - 1;
   const btn = document.getElementById('btnSpeakingNext');
-  btn.disabled = false;
-  btn.textContent = isLast ? 'Завершить' : 'Следующий вопрос';
-  btn.onclick = () => {
+  btn.disabled = true;
+  btn.textContent = 'Следующий вопрос';
+  btn.onclick = null;
+
+  // Fully automatic from here — no extra click needed. A short pause so
+  // the student sees "Запись завершена" before the next video starts.
+  const isLast = state.speakingIndex >= TEST_DATA.speaking.tasks.length - 1;
+  setTimeout(() => {
     if (isLast) {
       showScreen('screen-finish');
     } else {
@@ -745,7 +797,7 @@ function finishRecording() {
       renderSpeakingTask(nextIndex);
       startSpeakingSequence(nextIndex);
     }
-  };
+  }, 1200);
 }
 
 // ---------------------------------------------------------------------
