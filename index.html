@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RE-Academy — Вступительный тест</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -36,16 +40,16 @@
       <p class="sub">Оценка уровня английского языка перед началом подготовки к IELTS</p>
 
       <div class="duration-pill">Оценка английского языка</div>
-      <div class="duration-big">60 <span>минут</span></div>
+      <div class="duration-big">65 <span>минут</span></div>
 
       <div class="icon-row">
         <div class="seg">📖 Чтение<strong>25 мин</strong></div>
         <div class="plus">+</div>
         <div class="seg">🎧 Аудирование<strong>25 мин</strong></div>
         <div class="plus">+</div>
-        <div class="seg">🗣️ Говорение<strong>10 мин</strong></div>
+        <div class="seg">🗣️ Говорение<strong>15 мин</strong></div>
         <div class="eq">=</div>
-        <div class="seg">Итого<strong>60 мин</strong></div>
+        <div class="seg">Итого<strong>65 мин</strong></div>
       </div>
 
       <div class="checklist-title">Прежде чем начать, убедитесь:</div>
@@ -131,7 +135,7 @@
       <div class="card-icons">
         <div class="card-icon"><div class="icon-circle">📖</div>Чтение<br>25 мин</div>
         <div class="card-icon"><div class="icon-circle">🎧</div>Аудирование<br>25 мин</div>
-        <div class="card-icon"><div class="icon-circle">🗣️</div>Говорение<br>~10 мин</div>
+        <div class="card-icon"><div class="icon-circle">🗣️</div>Говорение<br>15 мин</div>
       </div>
       <div class="card-body">
         <ul>
@@ -205,6 +209,24 @@
     <div class="pane pane-passage" id="readingPassagePane"></div>
     <div class="pane pane-questions" id="readingQuestionsPane"></div>
     <div class="dot-rail" id="readingDotRail"></div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- Screen: Break between sections (optional, skippable)          -->
+<!-- ============================================================ -->
+<section class="screen" id="screen-break">
+  <div class="card-screen">
+    <div class="card">
+      <div class="card-header">
+        <h1>Перерыв</h1>
+        <p>Можете отдохнуть перед следующим разделом — или пропустить перерыв.</p>
+      </div>
+      <div class="card-body" style="text-align:center;">
+        <p class="break-countdown" id="breakCountdownText">Вы отдыхаете: 5 минут 0 секунд</p>
+        <div class="card-actions"><button id="btnBreakSkip">Пропустить перерыв и продолжить</button></div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -297,7 +319,7 @@
         <p>Вы переходите к разделу говорения</p>
       </div>
       <div class="card-icons">
-        <div class="card-icon"><div class="icon-circle">🗣️</div>Говорение<br>~10 мин</div>
+        <div class="card-icon"><div class="icon-circle">🗣️</div>Говорение<br>15 мин</div>
       </div>
       <div class="card-body">
         <ul>
