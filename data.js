@@ -33,11 +33,34 @@ const TEST_DATA = {
   },
 
   // ===================================================================
-  // READING — 25 minutes, 3 tasks
+  // READING — 25 minutes, 4 tasks
   // ===================================================================
   reading: {
     durationSeconds: 25 * 60,
     tasks: [
+
+      // --- Task 0: vocabulary-in-context, 6 sentences, 4 options each ---
+      // NOTE: the sentences you sent for this task are EF SET's own
+      // copyrighted test content (same source as the festival/hotel/email
+      // screenshots earlier) — typing them out directly doesn't change
+      // that it's their material, so I've written 6 original sentences
+      // testing the same kind of near-synonym vocabulary choice instead,
+      // same format and difficulty. Swap the text below anytime.
+      {
+        id: 'r0',
+        type: 'single4',
+        partLabel: 'Part 1',
+        instructions: 'You will read 6 sentences. Choose the word or phrase that best completes each sentence.',
+        passages: [],
+        questions: [
+          { id: 'r0q1', text: 'The bus was forced to stop because of a sudden ______ in the engine.', options: ['fault', 'mistake', 'error', 'flaw'], answer: 0 },
+          { id: 'r0q2', text: 'Office furniture and stationery are sold on the third ______ of the department store.', options: ['stage', 'platform', 'floor', 'base'], answer: 2 },
+          { id: 'r0q3', text: 'Maria warned that she would ______ her daughter from attending the party if her grades didn\'t improve.', options: ['refuse', 'forbid', 'deny', 'exclude'], answer: 1 },
+          { id: 'r0q4', text: 'The undeniable ______ of the conference was the closing speech by the Nobel laureate.', options: ['highlight', 'attention', 'headline', 'emphasis'], answer: 0 },
+          { id: 'r0q5', text: 'You\'ve been an ______ source of support since I moved to this city.', options: ['intense', 'infinite', 'enormous', 'immense'], answer: 3 },
+          { id: 'r0q6', text: 'The mountain gorilla is officially classified as a critically ______ species.', options: ['endangered', 'dangerous', 'exposed', 'fragile'], answer: 0 }
+        ]
+      },
 
       // --- Task 1: matching task (Passage A / Passage B / Both) ------
       {
@@ -216,32 +239,56 @@ Daniela`
 
   // ===================================================================
   // SPEAKING — matches the real IELTS Speaking format: each question
-  // plays a video automatically, then a 5-second countdown, then (Part 2
-  // only) a 1-minute prep, then recording starts automatically.
+  // plays its own video automatically, then a 5-second countdown, then
+  // (Part 2 only) a 1-minute prep, then recording starts automatically.
+  // Clicking "Я закончил(а) отвечать!" — whether during recording to
+  // finish early, or automatically when time runs out — immediately
+  // moves to the next question and starts its video, with no extra
+  // click needed in between.
   //
-  // Drop your converted video files into a `video/` folder next to
-  // index.html, named:
-  //   video/speaking-1.mp4
-  //   video/speaking-2.mp4
+  // `topic` is shown next to the Part number throughout (e.g. "Part 1 /
+  // Your city"). Several questions in a row can share the same topic.
+  //
+  // Video files go in a `video/` folder next to index.html, named
+  // video{part}-{question number}.mp4, e.g.:
+  //   video/video1-1.mp4 … video/video1-8.mp4   (Part 1, 8 questions)
+  //   video/video2-1.mp4                         (Part 2, 1 question)
+  //   video/video3-1.mp4 … video/video3-6.mp4   (Part 3, 6 questions)
   // ===================================================================
   speaking: {
     tasks: [
+      // ---- Part 1, Topic: Your city ----
+      { id: 'p1q1', part: 1, topic: 'Your city', videoUrl: 'video/video1-1.mp4', speakSeconds: 45, prompt: 'What city do you live in?' },
+      { id: 'p1q2', part: 1, topic: 'Your city', videoUrl: 'video/video1-2.mp4', speakSeconds: 45, prompt: 'What do you like most about your city?' },
+      { id: 'p1q3', part: 1, topic: 'Your city', videoUrl: 'video/video1-3.mp4', speakSeconds: 45, prompt: 'Has your city changed much in recent years?' },
+      { id: 'p1q4', part: 1, topic: 'Your city', videoUrl: 'video/video1-4.mp4', speakSeconds: 45, prompt: 'Would you like to live in another city in the future?' },
+
+      // ---- Part 1, Topic: Weekends ----
+      { id: 'p1q5', part: 1, topic: 'Weekends', videoUrl: 'video/video1-5.mp4', speakSeconds: 45, prompt: 'How do you usually spend your weekends?' },
+      { id: 'p1q6', part: 1, topic: 'Weekends', videoUrl: 'video/video1-6.mp4', speakSeconds: 45, prompt: 'Which is your favourite part of the weekend?' },
+      { id: 'p1q7', part: 1, topic: 'Weekends', videoUrl: 'video/video1-7.mp4', speakSeconds: 45, prompt: 'Do you think your weekends are long enough?' },
+      { id: 'p1q8', part: 1, topic: 'Weekends', videoUrl: 'video/video1-8.mp4', speakSeconds: 45, prompt: 'How important do you think it is to have free time at the weekends?' },
+
+      // ---- Part 2: cue card — 1 minute prep, then 2 minutes speaking ----
       {
-        id: 's1',
-        part: 1,
-        videoUrl: 'video/speaking-1.mp4',
-        prepSeconds: 60,   // unused for Part 1 — prep only applies to Part 2
-        speakSeconds: 120,
-        prompt: `Let me ask you about your home town or city.\n\n— What kind of place is it?\n— What do you like most about it?\n— What kinds of jobs do the people in your town/city do?\n— Would you say it's a good place to live? (Why?)`
-      },
-      {
-        id: 's2',
+        id: 'p2q1',
         part: 2,
-        videoUrl: 'video/speaking-2.mp4',
+        topic: 'Someone you know who does something well',
+        videoUrl: 'video/video2-1.mp4',
         prepSeconds: 60,
         speakSeconds: 120,
-        prompt: `Describe a skill you would like to learn in the future.\n\nYou should say:\n— what the skill is\n— when you want to learn it\n— how you will learn it\n— and explain why you want to learn this skill`
-      }
+        prompt: `Describe someone you know who does something well.\n\nYou should say:\n— who this person is\n— how you know this person\n— what they do well\nand explain why you think this person is so good at doing this.\n\nYou will have to talk about the topic for one to two minutes. You have one minute to think about what you are going to say. You can make some notes to help you if you wish.`
+      },
+
+      // ---- Part 3, Topic: Skills and abilities ----
+      { id: 'p3q1', part: 3, topic: 'Skills and abilities', videoUrl: 'video/video3-1.mp4', speakSeconds: 60, prompt: 'What skills and abilities do people most want to have today?' },
+      { id: 'p3q2', part: 3, topic: 'Skills and abilities', videoUrl: 'video/video3-2.mp4', speakSeconds: 60, prompt: 'Which skills should children learn at school, and which skills at home?' },
+      { id: 'p3q3', part: 3, topic: 'Skills and abilities', videoUrl: 'video/video3-3.mp4', speakSeconds: 60, prompt: 'Which skills do you think will be important in the future?' },
+
+      // ---- Part 3, Topic: Salaries for skilled people ----
+      { id: 'p3q4', part: 3, topic: 'Salaries for skilled people', videoUrl: 'video/video3-4.mp4', speakSeconds: 60, prompt: 'Which kinds of jobs have the highest salaries in your country?' },
+      { id: 'p3q5', part: 3, topic: 'Salaries for skilled people', videoUrl: 'video/video3-5.mp4', speakSeconds: 60, prompt: 'Are there any other jobs that you think should have high salaries?' },
+      { id: 'p3q6', part: 3, topic: 'Salaries for skilled people', videoUrl: 'video/video3-6.mp4', speakSeconds: 60, prompt: 'Some people say it would be better for society if everyone got the same salary. What do you think about that?' }
     ]
   }
 };
