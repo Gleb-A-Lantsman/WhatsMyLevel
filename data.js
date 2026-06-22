@@ -207,21 +207,29 @@ Daniela`
   },
 
   // ===================================================================
-  // SPEAKING — reuses the two prompts from the original prototype.
-  // Add more tasks here the same way to extend the section.
+  // SPEAKING — matches the real IELTS Speaking format: each question
+  // plays a video automatically, then a 5-second countdown, then (Part 2
+  // only) a 1-minute prep, then recording starts automatically.
+  //
+  // Drop your converted video files into a `video/` folder next to
+  // index.html, named:
+  //   video/speaking-1.mp4
+  //   video/speaking-2.mp4
   // ===================================================================
   speaking: {
     tasks: [
       {
         id: 's1',
         part: 1,
-        prepSeconds: 60,
+        videoUrl: 'video/speaking-1.mp4',
+        prepSeconds: 60,   // unused for Part 1 — prep only applies to Part 2
         speakSeconds: 120,
         prompt: `Let me ask you about your home town or city.\n\n— What kind of place is it?\n— What do you like most about it?\n— What kinds of jobs do the people in your town/city do?\n— Would you say it's a good place to live? (Why?)`
       },
       {
         id: 's2',
         part: 2,
+        videoUrl: 'video/speaking-2.mp4',
         prepSeconds: 60,
         speakSeconds: 120,
         prompt: `Describe a skill you would like to learn in the future.\n\nYou should say:\n— what the skill is\n— when you want to learn it\n— how you will learn it\n— and explain why you want to learn this skill`
