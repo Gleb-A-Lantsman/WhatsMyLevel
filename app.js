@@ -25,7 +25,10 @@ const state = {
 
   modalConfirmFn: null,    // which "advance" function the modal's Далее button should call
 
+  muted: false,
+
   speakingIndex: 0,
+  countdownHandle: null,
   prepHandle: null,
   speakHandle: null,
   mediaRecorder: null,
@@ -55,6 +58,85 @@ function showTopbar(label) {
   document.getElementById('topbarLabel').textContent = label;
   document.getElementById('topbar').classList.add('visible');
 }
+
+// Updates the mm:ss text + the small warning pie chart next to it.
+function updateTimerDisplay(remaining, total) {
+  document.getElementById('topbarTimerText').textContent = formatTime(remaining);
+  const pct = total ? Math.max(0, Math.min(100, (remaining / total) * 100)) : 0;
+  const isWarning = pct <= 20;
+  const pie = document.getElementById('timePie');
+  pie.classList.toggle('warning', isWarning);
+  const color = isWarning ? 'var(--color-danger)' : 'var(--color-primary)';
+  pie.style.background = `conic-gradient(${color} 0% ${pct}%, var(--color-bg-soft-deep) ${pct}% 100%)`;
+}
+
+// Renders the topbar progress bar as one segment per task: segments before
+// the current task are solid (submitted), the current task fills in
+// proportionally as questions are answered, later segments stay empty.
+function renderSectionProgress(totalTasks, currentIndex, currentFraction) {
+  const track = document.getElementById('topbarProgress');
+  track.innerHTML = '';
+  for (let i = 0; i < totalTasks; i++) {
+    const seg = document.createElement('div');
+    seg.className = 'progress-seg';
+    const fill = document.createElement('div');
+    fill.className = 'progress-seg-fill';
+    if (i < currentIndex) {
+      fill.classList.add('done');
+    } else if (i === currentIndex) {
+      fill.style.width = Math.round(currentFraction * 100) + '%';
+    } else {
+      fill.style.width = '0%';
+    }
+    seg.appendChild(fill);
+    track.appendChild(seg);
+  }
+}
+
+// Stops every timer/recording/media element and shows the "time's up,
+// test cancelled" screen. Used when a section's time limit runs out.
+function expireTest() {
+  clearInterval(state.readingTimerHandle);
+  clearInterval(state.listeningTimerHandle);
+  clearInterval(state.countdownHandle);
+  clearInterval(state.prepHandle);
+  clearInterval(state.speakHandle);
+  if (state.readingDotObserver) state.readingDotObserver.disconnect();
+  if (state.listeningDotObserver) state.listeningDotObserver.disconnect();
+  document.querySelectorAll('audio, video').forEach(el => { try { el.pause(); } catch (e) {} });
+  if (state.mediaRecorder && state.mediaRecorder.state !== 'inactive') {
+    try { state.mediaRecorder.stop(); } catch (e) {}
+  }
+  if (state.micStream) state.micStream.getTracks().forEach(t => t.stop());
+  showScreen('screen-test-expired');
+}
+
+document.getElementById('btnExpiredRestart').addEventListener('click', () => {
+  location.reload();
+});
+
+// ---------------------------------------------------------------------
+// Topbar controls: volume + fullscreen
+// ---------------------------------------------------------------------
+document.getElementById('btnVolume').addEventListener('click', () => {
+  state.muted = !state.muted;
+  document.querySelectorAll('audio, video').forEach(el => { el.muted = state.muted; });
+  const btn = document.getElementById('btnVolume');
+  btn.textContent = state.muted ? '🔇' : '🔊';
+  btn.classList.toggle('muted', state.muted);
+  btn.title = state.muted ? 'Включить звук' : 'Выключить звук';
+});
+
+document.getElementById('btnFullscreen').addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+});
+document.addEventListener('fullscreenchange', () => {
+  document.getElementById('btnFullscreen').textContent = document.fullscreenElement ? '⤡' : '⤢';
+});
 
 // ---------------------------------------------------------------------
 // Screen 1 → 2: Registration
@@ -123,13 +205,13 @@ document.getElementById('btnReadingStart').addEventListener('click', () => {
   clearInterval(state.readingTimerHandle);
   state.readingTimerHandle = setInterval(() => {
     state.readingRemaining--;
-    document.getElementById('topbarTimer').textContent = formatTime(state.readingRemaining);
+    updateTimerDisplay(state.readingRemaining, TEST_DATA.reading.durationSeconds);
     if (state.readingRemaining <= 0) {
       clearInterval(state.readingTimerHandle);
-      finishReadingSection();
+      expireTest();
     }
   }, 1000);
-  document.getElementById('topbarTimer').textContent = formatTime(state.readingRemaining);
+  updateTimerDisplay(state.readingRemaining, TEST_DATA.reading.durationSeconds);
 });
 
 // ---------------------------------------------------------------------
@@ -221,8 +303,8 @@ function recordReadingAnswer(qid, value) {
 function updateReadingProgress(task) {
   const total = task.questions.length;
   const answered = task.questions.filter(q => q.id in state.readingAnswers).length;
-  const pct = total ? Math.round((answered / total) * 100) : 0;
-  document.getElementById('topbarProgress').style.width = pct + '%';
+  const fraction = total ? answered / total : 0;
+  renderSectionProgress(TEST_DATA.reading.tasks.length, state.readingTaskIndex, fraction);
 }
 
 function buildDotRail(containerId, count) {
@@ -318,13 +400,13 @@ document.getElementById('btnListeningStart').addEventListener('click', () => {
   clearInterval(state.listeningTimerHandle);
   state.listeningTimerHandle = setInterval(() => {
     state.listeningRemaining--;
-    document.getElementById('topbarTimer').textContent = formatTime(state.listeningRemaining);
+    updateTimerDisplay(state.listeningRemaining, TEST_DATA.listening.durationSeconds);
     if (state.listeningRemaining <= 0) {
       clearInterval(state.listeningTimerHandle);
-      finishListeningSection();
+      expireTest();
     }
   }, 1000);
-  document.getElementById('topbarTimer').textContent = formatTime(state.listeningRemaining);
+  updateTimerDisplay(state.listeningRemaining, TEST_DATA.listening.durationSeconds);
 });
 
 function renderListeningTask(index) {
@@ -391,8 +473,8 @@ function recordListeningAnswer(qid, value) {
 function updateListeningProgress(task) {
   const total = task.questions.length;
   const answered = task.questions.filter(q => q.id in state.listeningAnswers).length;
-  const pct = total ? Math.round((answered / total) * 100) : 0;
-  document.getElementById('topbarProgress').style.width = pct + '%';
+  const fraction = total ? answered / total : 0;
+  renderSectionProgress(TEST_DATA.listening.tasks.length, state.listeningTaskIndex, fraction);
 }
 
 function attemptAdvanceListeningTask() {
@@ -486,29 +568,70 @@ function renderSpeakingTask(index) {
 
   document.getElementById('speakingPartLabel').textContent = `Part ${task.part}`;
   document.getElementById('speakingPrompt').textContent = task.prompt;
-  document.getElementById('speakingTimer').textContent = formatTime(task.prepSeconds);
-  document.getElementById('speakingStatus').textContent = 'Нажмите «Начать подготовку», когда будете готовы.';
+  document.getElementById('speakingTimer').textContent = '—';
+  document.getElementById('speakingStatus').textContent = 'Нажмите «Следующий вопрос», чтобы начать.';
 
-  const btnPrep = document.getElementById('btnPrepStart');
-  const btnRecStart = document.getElementById('btnRecordStart');
-  const btnRecStop = document.getElementById('btnRecordStop');
-  const btnSubmit = document.getElementById('btnSpeakingSubmit');
+  const video = document.getElementById('speakingVideo');
+  video.src = task.videoUrl;
+  video.muted = state.muted;
+  video.style.display = 'none';
+  document.getElementById('speakingVideoError').style.display = 'none';
 
-  btnPrep.disabled = false;
-  btnRecStart.disabled = true;
-  btnRecStop.disabled = true;
-  btnSubmit.disabled = true;
+  const btn = document.getElementById('btnSpeakingNext');
+  btn.disabled = false;
+  btn.textContent = 'Следующий вопрос';
+  btn.onclick = () => startSpeakingSequence(index);
+}
 
-  btnPrep.onclick = () => startPrep(task);
-  btnRecStart.onclick = () => startRecording(task);
-  btnRecStop.onclick = stopRecording;
-  btnSubmit.onclick = () => submitSpeakingAnswer(index);
+function startSpeakingSequence(index) {
+  const task = TEST_DATA.speaking.tasks[index];
+  document.getElementById('btnSpeakingNext').disabled = true;
+
+  const video = document.getElementById('speakingVideo');
+  const errorEl = document.getElementById('speakingVideoError');
+  video.style.display = 'block';
+  document.getElementById('speakingStatus').textContent = 'Слушайте вопрос…';
+
+  let proceeded = false;
+  const proceedToCountdown = () => {
+    if (proceeded) return; // guard against both 'ended' and 'error' firing
+    proceeded = true;
+    startCountdown(task);
+  };
+
+  video.onended = proceedToCountdown;
+  video.onerror = () => {
+    errorEl.style.display = 'block';
+    errorEl.innerHTML = `Не удалось загрузить видео. Добавьте файл <code>${task.videoUrl}</code>, чтобы проверить воспроизведение.`;
+    setTimeout(proceedToCountdown, 800); // keeps the flow testable before the real file exists
+  };
+
+  try { video.currentTime = 0; } catch (e) { /* duration not known yet */ }
+  video.play().catch(() => video.onerror());
+}
+
+function startCountdown(task) {
+  document.getElementById('speakingStatus').textContent = 'Запись начнётся через:';
+  let remaining = 5;
+  document.getElementById('speakingTimer').textContent = String(remaining);
+
+  clearInterval(state.countdownHandle);
+  state.countdownHandle = setInterval(() => {
+    remaining--;
+    document.getElementById('speakingTimer').textContent = String(Math.max(remaining, 0));
+    if (remaining <= 0) {
+      clearInterval(state.countdownHandle);
+      if (task.part === 2) {
+        startPrep(task);
+      } else {
+        startRecordingAuto(task);
+      }
+    }
+  }, 1000);
 }
 
 function startPrep(task) {
-  document.getElementById('btnPrepStart').disabled = true;
-  document.getElementById('speakingStatus').textContent = 'Подготовьтесь к ответу…';
-
+  document.getElementById('speakingStatus').textContent = 'Время на подготовку…';
   let remaining = task.prepSeconds;
   document.getElementById('speakingTimer').textContent = formatTime(remaining);
 
@@ -518,14 +641,14 @@ function startPrep(task) {
     document.getElementById('speakingTimer').textContent = formatTime(remaining);
     if (remaining <= 0) {
       clearInterval(state.prepHandle);
-      document.getElementById('speakingTimer').textContent = 'Говорите!';
-      document.getElementById('speakingStatus').textContent = 'Время отвечать — нажмите «Записать ответ».';
-      document.getElementById('btnRecordStart').disabled = false;
+      startRecordingAuto(task);
     }
   }, 1000);
 }
 
-async function startRecording(task) {
+async function startRecordingAuto(task) {
+  document.getElementById('speakingStatus').innerHTML = '<span class="rec-dot"></span><span class="rec-label">ЗАПИСЬ</span>';
+
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     state.micStream = stream;
@@ -534,15 +657,8 @@ async function startRecording(task) {
     state.mediaRecorder = recorder;
 
     recorder.addEventListener('dataavailable', (e) => state.audioChunks.push(e.data));
-    recorder.addEventListener('stop', () => {
-      stream.getTracks().forEach(t => t.stop());
-      document.getElementById('btnSpeakingSubmit').disabled = false;
-    });
-
+    recorder.addEventListener('stop', () => stream.getTracks().forEach(t => t.stop()));
     recorder.start();
-    document.getElementById('btnRecordStart').disabled = true;
-    document.getElementById('btnRecordStop').disabled = false;
-    document.getElementById('speakingStatus').innerHTML = '<span class="rec-dot"></span>Идёт запись…';
 
     let remaining = task.speakSeconds;
     document.getElementById('speakingTimer').textContent = formatTime(remaining);
@@ -552,39 +668,39 @@ async function startRecording(task) {
       document.getElementById('speakingTimer').textContent = formatTime(remaining);
       if (remaining <= 0) {
         clearInterval(state.speakHandle);
-        stopRecording();
+        finishRecording();
       }
     }, 1000);
   } catch (err) {
     console.error('Microphone error:', err);
     document.getElementById('speakingStatus').textContent =
-      'Не удалось получить доступ к микрофону. Проверьте разрешения браузера и попробуйте снова.';
-    document.getElementById('btnRecordStart').disabled = false;
+      'Не удалось получить доступ к микрофону. Проверьте разрешения браузера.';
+    finishRecording(); // don't leave the student stuck if the mic is blocked
   }
 }
 
-function stopRecording() {
+function finishRecording() {
   clearInterval(state.speakHandle);
   if (state.mediaRecorder && state.mediaRecorder.state !== 'inactive') {
     state.mediaRecorder.stop();
   }
-  document.getElementById('btnRecordStop').disabled = true;
   document.getElementById('speakingStatus').textContent = 'Запись завершена.';
-}
+  document.getElementById('speakingTimer').textContent = '—';
 
-function submitSpeakingAnswer(index) {
-  document.getElementById('btnSpeakingSubmit').disabled = true;
-  document.getElementById('speakingStatus').textContent = 'Ответ сохранён. Переходим к следующему заданию…';
-
-  setTimeout(() => {
-    const next = index + 1;
-    if (next < TEST_DATA.speaking.tasks.length) {
-      state.speakingIndex = next;
-      renderSpeakingTask(next);
-    } else {
+  const isLast = state.speakingIndex >= TEST_DATA.speaking.tasks.length - 1;
+  const btn = document.getElementById('btnSpeakingNext');
+  btn.disabled = false;
+  btn.textContent = isLast ? 'Завершить' : 'Следующий вопрос';
+  btn.onclick = () => {
+    if (isLast) {
       showScreen('screen-finish');
+    } else {
+      state.speakingIndex++;
+      const nextIndex = state.speakingIndex;
+      renderSpeakingTask(nextIndex);
+      startSpeakingSequence(nextIndex);
     }
-  }, 700);
+  };
 }
 
 // ---------------------------------------------------------------------
