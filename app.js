@@ -266,16 +266,15 @@ document.getElementById('registerForm').addEventListener('submit', (e) => {
     city: document.getElementById('fCity').value.trim(),
     gender: document.getElementById('fGender').value
   };
-  showScreen('screen-welcome');
-  playWelcomeVideoAutoplay();
+  showScreen('screen-audio');
   armUnloadGuard();
 });
 
 // ---------------------------------------------------------------------
-// Screen 2 → 3: Welcome
+// Screen 2 → 3: Welcome (now shown AFTER the audio check, not before)
 // ---------------------------------------------------------------------
 document.getElementById('btnWelcomeNext').addEventListener('click', () => {
-  showScreen('screen-audio');
+  showScreen('screen-reading-intro');
 });
 
 // Welcome screen intro video (video0-0) — autoplays as soon as the
@@ -341,7 +340,8 @@ document.getElementById('btnPlayTone').addEventListener('click', () => {
 });
 
 document.getElementById('btnAudioYes').addEventListener('click', () => {
-  showScreen('screen-reading-intro');
+  showScreen('screen-welcome');
+  playWelcomeVideoAutoplay();
 });
 
 document.getElementById('btnAudioNo').addEventListener('click', () => {
@@ -606,9 +606,7 @@ function renderListeningTask(index) {
   // ---- Right pane: question cards (radio, 3 or 4 options) ----
   let qHtml = '';
   task.questions.forEach(q => {
-    const header = task.headerStyle === 'short'
-      ? `Speaker ${q.speaker}`
-      : `What is the best response to Speaker ${q.speaker}?`;
+    const header = `Choose the best response to Speaker ${q.speaker}`;
     qHtml += `<div class="q-card" data-qid="${q.id}">`;
     qHtml += `<p class="q-text">${escapeHtml(header)}</p>`;
     q.options.forEach((opt, i) => {
@@ -769,6 +767,86 @@ document.getElementById('btnSpeakingStart').addEventListener('click', () => {
   state.speakingIndex = 0;
   state.speakingRecordings = [];
   state.shownPartIntros = {};
+  showScreen('screen-mic-check');
+  resetMicCheckScreen();
+});
+
+// ---------------------------------------------------------------------
+// Microphone check — required before Speaking can start. Mirrors the
+// audio-check screen's pattern, but record-and-playback instead of
+// play-a-tone, since that's the natural equivalent for testing a mic.
+// If permission is denied, the student is blocked from continuing —
+// the only way past this screen is "Да, всё работает" after a
+// successful recording.
+// ---------------------------------------------------------------------
+function resetMicCheckScreen() {
+  document.getElementById('micRecordBlock').style.display = 'none';
+  document.getElementById('micDeniedHelp').style.display = 'none';
+  document.getElementById('micConfirmButtons').style.display = 'none';
+  document.getElementById('micRecordStatus').textContent = '';
+  document.getElementById('btnMicRequest').style.display = 'inline-block';
+  document.getElementById('btnMicRequest').disabled = false;
+  state.micStream = null;
+}
+
+document.getElementById('btnMicRequest').addEventListener('click', async () => {
+  const requestBtn = document.getElementById('btnMicRequest');
+  const deniedHelp = document.getElementById('micDeniedHelp');
+  deniedHelp.style.display = 'none';
+  requestBtn.disabled = true;
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    state.micStream = stream;
+    requestBtn.style.display = 'none';
+    document.getElementById('micRecordBlock').style.display = 'block';
+  } catch (err) {
+    console.error('Mic permission error:', err);
+    deniedHelp.style.display = 'block';
+    requestBtn.disabled = false;
+  }
+});
+
+document.getElementById('btnMicRecord').addEventListener('click', () => {
+  if (!state.micStream) return;
+  const recordBtn = document.getElementById('btnMicRecord');
+  const statusEl = document.getElementById('micRecordStatus');
+  const playbackEl = document.getElementById('micPlaybackEl');
+  const confirmButtons = document.getElementById('micConfirmButtons');
+
+  recordBtn.disabled = true;
+  confirmButtons.style.display = 'none';
+  statusEl.textContent = 'Запись… говорите!';
+
+  const chunks = [];
+  const recorder = new MediaRecorder(state.micStream);
+  recorder.addEventListener('dataavailable', (e) => chunks.push(e.data));
+  recorder.addEventListener('stop', () => {
+    const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+    playbackEl.src = URL.createObjectURL(blob);
+    statusEl.textContent = 'Прослушайте запись:';
+    playbackEl.style.display = 'block';
+    playbackEl.play().catch(() => {});
+    confirmButtons.style.display = 'flex';
+    recordBtn.disabled = false;
+    recordBtn.textContent = '🔴 Записать ещё раз';
+  });
+
+  recorder.start();
+  setTimeout(() => {
+    if (recorder.state !== 'inactive') recorder.stop();
+  }, 3000);
+});
+
+document.getElementById('btnMicNo').addEventListener('click', () => {
+  document.getElementById('micRecordStatus').textContent = 'Попробуйте записать ещё раз — проверьте громкость микрофона в настройках устройства.';
+  document.getElementById('micConfirmButtons').style.display = 'none';
+});
+
+document.getElementById('btnMicYes').addEventListener('click', () => {
+  // Stop the test stream now — startRecordingAuto() requests its own
+  // fresh getUserMedia stream per question, so this one isn't reused.
+  if (state.micStream) state.micStream.getTracks().forEach(t => t.stop());
   goToSpeakingTask(0);
 });
 
@@ -1092,6 +1170,7 @@ function finishRecording() {
 function playOutroVideo() {
   const video = document.getElementById('outroVideo');
   if (!video || !TEST_DATA.speakingOutro) return;
+  video.style.display = 'block';
   video.src = TEST_DATA.speakingOutro.videoUrl;
   video.muted = false;
   video.play().catch(() => {
