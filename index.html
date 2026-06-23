@@ -364,14 +364,16 @@
 <!-- ============================================================ -->
 <section class="screen" id="screen-speaking-part-video">
   <div class="card-screen">
-    <div class="speaking-card">
-      <div class="speaking-eyebrow" id="partIntroLabel">Speaking / Part 1</div>
-      <div class="speaking-video-wrap">
-        <video id="partIntroVideo" class="speaking-video" playsinline></video>
-      </div>
-      <p class="audio-error" id="partIntroVideoError" style="max-width:100%;"></p>
+    <div class="speaking-card-stack">
       <img class="speaking-logo" src="assets/logo.png" alt="RE-Academy">
-      <div class="card-actions"><button id="btnPartIntroNext">К вопросам!</button></div>
+      <div class="speaking-card">
+        <div class="speaking-eyebrow" id="partIntroLabel">Speaking / Part 1</div>
+        <div class="speaking-video-wrap">
+          <video id="partIntroVideo" class="speaking-video" playsinline></video>
+        </div>
+        <p class="audio-error" id="partIntroVideoError" style="max-width:100%;"></p>
+        <div class="card-actions"><button id="btnPartIntroNext">К вопросам!</button></div>
+      </div>
     </div>
   </div>
 </section>
@@ -381,19 +383,21 @@
 <!-- ============================================================ -->
 <section class="screen" id="screen-speaking-task">
   <div class="card-screen">
-    <div class="speaking-card">
-      <div class="speaking-eyebrow" id="speakingPartLabel">Part 1</div>
-      <div class="speaking-video-wrap">
-        <video id="speakingVideo" class="speaking-video" playsinline></video>
-        <button type="button" id="btnSpeakingReplay" class="replay-btn" aria-label="Повторить видео" title="Повторить видео" style="display:none;">↻</button>
-      </div>
-      <p class="audio-error" id="speakingVideoError" style="max-width:100%;"></p>
-      <div class="speaking-prompt" id="speakingPrompt"></div>
+    <div class="speaking-card-stack">
       <img class="speaking-logo" src="assets/logo.png" alt="RE-Academy">
-      <div class="speaking-timer" id="speakingTimer">—</div>
-      <div class="speaking-status" id="speakingStatus">Нажмите «Следующий вопрос», чтобы начать.</div>
-      <div class="speaking-actions">
-        <button id="btnSpeakingNext">Следующий вопрос</button>
+      <div class="speaking-card">
+        <div class="speaking-eyebrow" id="speakingPartLabel">Part 1</div>
+        <div class="speaking-video-wrap">
+          <video id="speakingVideo" class="speaking-video" playsinline></video>
+          <button type="button" id="btnSpeakingReplay" class="replay-btn" aria-label="Повторить видео" title="Повторить видео" style="display:none;">↻</button>
+        </div>
+        <p class="audio-error" id="speakingVideoError" style="max-width:100%;"></p>
+        <div class="speaking-prompt" id="speakingPrompt"></div>
+        <div class="speaking-timer" id="speakingTimer">—</div>
+        <div class="speaking-status" id="speakingStatus">Нажмите «Следующий вопрос», чтобы начать.</div>
+        <div class="speaking-actions">
+          <button id="btnSpeakingNext">Следующий вопрос</button>
+        </div>
       </div>
     </div>
   </div>
