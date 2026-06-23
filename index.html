@@ -63,6 +63,8 @@
         <li>Интернет-соединение стабильное.</li>
         <li>Тест лучше проходить в браузере Chrome.</li>
         <li>Мессенджеры, почта и другие программы закрыты, чтобы не отвлекаться.</li>
+        <li>Вам может потребоваться VPN для прохождения теста.</li>
+        <li>Проходите тест на ПК или Mac. Смартфон не подойдёт для чтения, и некоторые модели не подойдут для аудирования.</li>
       </ol>
 
       <div class="about-block">
@@ -299,9 +301,42 @@
           <li>Каждый вопрос начинается с короткого видео.</li>
           <li>После видео начнётся 5-секундный отсчёт, а затем запись начнётся автоматически.</li>
           <li>Для заданий Part 2 перед записью даётся 1 минута на подготовку.</li>
-          <li>Для записи понадобится доступ к микрофону — браузер запросит разрешение.</li>
+          <li>Вам потребуется бумага и ручка или приложение для заметок (например, на телефоне).</li>
+          <li>Вам также потребуется разрешить доступ к микрофону — иначе мы не сможем вас услышать! На следующем экране мы проверим, что микрофон работает.</li>
         </ul>
         <div class="card-actions"><button id="btnSpeakingStart">Начать</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- Screen: Microphone check — required before Speaking can start -->
+<!-- ============================================================ -->
+<section class="screen" id="screen-mic-check">
+  <div class="card-screen">
+    <div class="card">
+      <div class="card-header">
+        <h1>Проверка микрофона</h1>
+        <p>Без доступа к микрофону мы не сможем услышать ваши ответы — этот шаг обязателен.</p>
+      </div>
+      <div class="card-body" style="text-align:center;">
+        <button id="btnMicRequest" class="secondary" style="margin:14px 0 18px;">🎙 Разрешить доступ к микрофону</button>
+
+        <div id="micRecordBlock" style="display:none;">
+          <p style="font-size:13.5px; color:var(--color-text-soft); margin-bottom:14px;">Скажите что-нибудь в течение 3 секунд, затем мы проиграем запись — так вы услышите, работает ли микрофон.</p>
+          <button id="btnMicRecord" style="margin-bottom:14px;">🔴 Записать 3 секунды</button>
+          <p id="micRecordStatus" style="font-size:13.5px; color:var(--color-text-soft); min-height:18px;"></p>
+          <audio id="micPlaybackEl" preload="none" style="display:none;"></audio>
+          <div id="micConfirmButtons" style="display:none; gap:10px; justify-content:center;" class="modal-actions">
+            <button class="secondary" id="btnMicNo">Не слышу себя</button>
+            <button id="btnMicYes">Да, всё работает</button>
+          </div>
+        </div>
+
+        <p id="micDeniedHelp" style="display:none; font-size:13px; color:var(--color-danger); background:#fef2f2; border-radius:var(--radius-sm); padding:10px 14px; margin-top:14px;">
+          Доступ к микрофону не предоставлен. Без него раздел «Говорение» пройти невозможно — пожалуйста, разрешите доступ к микрофону в настройках браузера, затем нажмите кнопку выше ещё раз.
+        </p>
       </div>
     </div>
   </div>
@@ -352,14 +387,14 @@
 <section class="screen" id="screen-finish">
   <div class="card-screen">
     <div class="card">
+      <div class="speaking-video-wrap" style="margin:0; border-radius: var(--radius-lg) var(--radius-lg) 0 0;">
+        <video id="outroVideo" class="speaking-video" playsinline style="border-radius: var(--radius-lg) var(--radius-lg) 0 0;"></video>
+      </div>
       <div class="card-header">
         <h1>Тест завершён!</h1>
         <p>Спасибо, что прошли вступительный тест RE-Academy.</p>
       </div>
-      <div class="card-body" style="padding-top:0;">
-        <div class="speaking-video-wrap" style="margin-bottom:18px;">
-          <video id="outroVideo" class="speaking-video" playsinline></video>
-        </div>
+      <div class="card-body">
         <p style="color:var(--color-text-soft); font-size:14.5px; margin-bottom:10px;">
           Результаты будут готовы после проверки преподавателем — мы свяжемся с вами по указанному email.
         </p>
