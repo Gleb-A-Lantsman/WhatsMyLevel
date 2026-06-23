@@ -41,6 +41,9 @@ const state = {
   audioChunks: [],
   micStream: null,
 
+  shownPartIntros: {},     // { 1: true, 2: true, 3: true } — each Part's intro video plays once
+  partIntroContinueFn: null, // what "К вопросам!" should do next
+
   pendingForceAdvance: false
 };
 
@@ -246,6 +249,29 @@ document.getElementById('registerForm').addEventListener('submit', (e) => {
 document.getElementById('btnWelcomeNext').addEventListener('click', () => {
   showScreen('screen-audio');
 });
+
+// Welcome screen intro video (video0-0) — tap to play, not autoplay.
+// The play button overlay hides itself once clicked; the native video
+// just plays inline below the icons.
+const welcomeVideo = document.getElementById('welcomeVideo');
+const btnWelcomeVideoPlay = document.getElementById('btnWelcomeVideoPlay');
+if (welcomeVideo && TEST_DATA.welcomeVideo) {
+  welcomeVideo.src = TEST_DATA.welcomeVideo.videoUrl;
+}
+if (btnWelcomeVideoPlay) {
+  btnWelcomeVideoPlay.addEventListener('click', () => {
+    btnWelcomeVideoPlay.style.display = 'none';
+    welcomeVideo.muted = false;
+    welcomeVideo.play().catch(() => {
+      // Even a direct click can occasionally be rejected (e.g. file
+      // missing) — bring the button back so the student can retry.
+      btnWelcomeVideoPlay.style.display = 'flex';
+    });
+  });
+  welcomeVideo.addEventListener('ended', () => {
+    btnWelcomeVideoPlay.style.display = 'flex';
+  });
+}
 
 // ---------------------------------------------------------------------
 // Screen 3: Audio check
@@ -662,19 +688,73 @@ function setupAudioPlayer(task) {
 // ---------------------------------------------------------------------
 // Speaking section
 // ---------------------------------------------------------------------
+
+// Shows the reusable "Part intro video" screen (video1-0 / video2-0 /
+// video3-0). Plays automatically (best effort, same fallback pattern as
+// in-test question videos); "К вопросам!" can be clicked at any time,
+// it doesn't wait for the video to finish. onContinue runs once, when
+// that button is clicked.
+function showPartIntroVideo(videoUrl, onContinue) {
+  showScreen('screen-speaking-part-video');
+  const video = document.getElementById('partIntroVideo');
+  const errorEl = document.getElementById('partIntroVideoError');
+  const btn = document.getElementById('btnPartIntroNext');
+
+  errorEl.style.display = 'none';
+  video.src = videoUrl;
+  video.muted = false;
+
+  video.onerror = () => {
+    errorEl.style.display = 'block';
+    errorEl.innerHTML = `Не удалось загрузить видео. Добавьте файл <code>${videoUrl}</code>, чтобы проверить воспроизведение.`;
+  };
+
+  video.play().catch(() => {
+    video.muted = true;
+    video.play().catch(() => video.onerror());
+  });
+
+  btn.onclick = () => {
+    video.pause();
+    onContinue();
+  };
+}
+
 document.getElementById('btnSpeakingStart').addEventListener('click', () => {
   state.speakingIndex = 0;
   state.speakingRecordings = [];
-  showScreen('screen-speaking-task');
-  renderSpeakingTask(0);
+  state.shownPartIntros = {};
+  goToSpeakingTask(0);
 });
+
+// Shows the Part-intro video before a task if that Part's intro hasn't
+// played yet this run, then renders/starts the task itself. Every task
+// still gets exactly one question screen — only the three Part-level
+// intros are separate screens.
+function goToSpeakingTask(index) {
+  const task = TEST_DATA.speaking.tasks[index];
+  const intro = TEST_DATA.speakingIntros && TEST_DATA.speakingIntros[task.part];
+
+  if (intro && !state.shownPartIntros[task.part]) {
+    state.shownPartIntros[task.part] = true;
+    showPartIntroVideo(intro.videoUrl, () => {
+      showScreen('screen-speaking-task');
+      renderSpeakingTask(index);
+      startSpeakingSequence(index);
+    });
+  } else {
+    showScreen('screen-speaking-task');
+    renderSpeakingTask(index);
+    startSpeakingSequence(index);
+  }
+}
 
 function renderSpeakingTask(index) {
   const task = TEST_DATA.speaking.tasks[index];
 
   document.getElementById('speakingPartLabel').textContent = `Part ${task.part} / ${task.topic}`;
   document.getElementById('speakingTimer').textContent = '—';
-  document.getElementById('speakingStatus').textContent = 'Нажмите «Следующий вопрос», чтобы начать.';
+  document.getElementById('speakingStatus').textContent = '';
 
   // Part 2 gets the cue-card treatment (title + bullet list look like a
   // real IELTS cue card); Parts 1 and 3 keep the plain prompt bubble.
@@ -694,10 +774,14 @@ function renderSpeakingTask(index) {
   replayBtn.style.display = 'none';
   replayBtn.onclick = () => replaySpeakingVideo(task);
 
+  // The "Следующий вопрос" / "Я закончил(а)…" button is rebound as the
+  // sequence progresses (startSpeakingSequence, startPrep,
+  // startRecordingAuto) — here it just starts disabled, since this
+  // screen always auto-plays straight into that sequence.
   const btn = document.getElementById('btnSpeakingNext');
-  btn.disabled = false;
+  btn.disabled = true;
   btn.textContent = 'Следующий вопрос';
-  btn.onclick = () => startSpeakingSequence(index);
+  btn.onclick = null;
 }
 
 // Plays the current video again on demand (after it already finished
@@ -800,7 +884,7 @@ function startPrep(task) {
   btn.textContent = 'Я закончил(а) готовиться!';
   btn.onclick = () => {
     clearInterval(state.prepHandle);
-    startRecordingAuto(task);
+    playPart2PromptVideo(task);
   };
 
   clearInterval(state.prepHandle);
@@ -809,9 +893,52 @@ function startPrep(task) {
     document.getElementById('speakingTimer').textContent = formatTime(remaining);
     if (remaining <= 0) {
       clearInterval(state.prepHandle);
-      startRecordingAuto(task);
+      playPart2PromptVideo(task);
     }
   }, 1000);
+}
+
+// Part 2 only: after prep ends (or is skipped), play video2-2 ("Can
+// you start speaking now please?") before recording starts. Recording
+// begins the instant this video finishes.
+function playPart2PromptVideo(task) {
+  const prompt = TEST_DATA.speakingPart2Prompt;
+  if (!prompt) {
+    startRecordingAuto(task);
+    return;
+  }
+
+  document.getElementById('btnSpeakingNext').disabled = true;
+  document.getElementById('speakingStatus').textContent = '';
+  document.getElementById('speakingTimer').textContent = '—';
+
+  const video = document.getElementById('speakingVideo');
+  const errorEl = document.getElementById('speakingVideoError');
+  const replayBtn = document.getElementById('btnSpeakingReplay');
+  replayBtn.style.display = 'none';
+  video.style.display = 'block';
+  video.src = prompt.videoUrl;
+  video.muted = false;
+
+  let proceeded = false;
+  const proceedToRecording = () => {
+    if (proceeded) return;
+    proceeded = true;
+    startRecordingAuto(task);
+  };
+
+  video.onended = proceedToRecording;
+  video.onerror = () => {
+    errorEl.style.display = 'block';
+    errorEl.innerHTML = `Не удалось загрузить видео. Добавьте файл <code>${prompt.videoUrl}</code>, чтобы проверить воспроизведение.`;
+    setTimeout(proceedToRecording, 800);
+  };
+
+  try { video.currentTime = 0; } catch (e) { /* duration not known yet */ }
+  video.play().catch(() => {
+    video.muted = true;
+    video.play().catch(() => video.onerror());
+  });
 }
 
 async function startRecordingAuto(task) {
@@ -888,14 +1015,33 @@ function finishRecording() {
   setTimeout(() => {
     if (isLast) {
       showScreen('screen-finish');
+      playOutroVideo();
       submitReport();
     } else {
       state.speakingIndex++;
-      const nextIndex = state.speakingIndex;
-      renderSpeakingTask(nextIndex);
-      startSpeakingSequence(nextIndex);
+      // Routed through goToSpeakingTask (not a direct render+start) so
+      // that if the next question starts a new Part, that Part's intro
+      // video screen is shown first.
+      goToSpeakingTask(state.speakingIndex);
     }
   }, 1200);
+}
+
+// Plays video3-7 ("Well done") on the Finish screen, right after the
+// last Speaking answer is submitted. Best-effort autoplay with sound,
+// same fallback pattern as the in-test question videos — this isn't
+// the very first interaction on the page (the student just clicked
+// through several screens to get here), so attempting unmuted first
+// is reasonable.
+function playOutroVideo() {
+  const video = document.getElementById('outroVideo');
+  if (!video || !TEST_DATA.speakingOutro) return;
+  video.src = TEST_DATA.speakingOutro.videoUrl;
+  video.muted = false;
+  video.play().catch(() => {
+    video.muted = true;
+    video.play().catch(() => {});
+  });
 }
 
 // ---------------------------------------------------------------------
