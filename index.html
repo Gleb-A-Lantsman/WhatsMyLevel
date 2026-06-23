@@ -138,6 +138,12 @@
         <h1>Добро пожаловать</h1>
         <p>Вы начинаете вступительный тест RE-Academy</p>
       </div>
+      <div class="card-body" style="padding-bottom:0;">
+        <div class="welcome-video-wrap">
+          <video id="welcomeVideo" class="welcome-video" playsinline></video>
+          <button type="button" id="btnWelcomeVideoPlay" class="welcome-video-play" aria-label="Воспроизвести видео">▶</button>
+        </div>
+      </div>
       <div class="card-icons">
         <div class="card-icon"><div class="icon-circle">📖</div>Чтение<br>25 мин</div>
         <div class="card-icon"><div class="icon-circle">🎧</div>Аудирование<br>25 мин</div>
@@ -302,6 +308,22 @@
 </section>
 
 <!-- ============================================================ -->
+<!-- Screen: Speaking part intro video (reused for Part 1/2/3 —    -->
+<!-- video1-0 / video2-0 / video3-0, rendered dynamically)         -->
+<!-- ============================================================ -->
+<section class="screen" id="screen-speaking-part-video">
+  <div class="card-screen">
+    <div class="speaking-card">
+      <div class="speaking-video-wrap">
+        <video id="partIntroVideo" class="speaking-video" playsinline></video>
+      </div>
+      <p class="audio-error" id="partIntroVideoError" style="max-width:100%;"></p>
+      <div class="card-actions"><button id="btnPartIntroNext">К вопросам!</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
 <!-- Screen 10: Speaking task (rendered dynamically by app.js)     -->
 <!-- ============================================================ -->
 <section class="screen" id="screen-speaking-task">
@@ -333,7 +355,10 @@
         <h1>Тест завершён!</h1>
         <p>Спасибо, что прошли вступительный тест RE-Academy.</p>
       </div>
-      <div class="card-body">
+      <div class="card-body" style="padding-top:0;">
+        <div class="speaking-video-wrap" style="margin-bottom:18px;">
+          <video id="outroVideo" class="speaking-video" playsinline></video>
+        </div>
         <p style="color:var(--color-text-soft); font-size:14.5px; margin-bottom:10px;">
           Результаты будут готовы после проверки преподавателем — мы свяжемся с вами по указанному email.
         </p>
