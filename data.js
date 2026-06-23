@@ -106,7 +106,7 @@ const TEST_DATA = {
 
 Other than water sports, there is plenty to do. There is a tennis court with a gym next to it in the local village. The city is only 10 miles away, where you can go shopping. In addition, the hotel can organize a day trip into the mountains. If you just want to relax, there is a massage room.
 
-A breakfast buffet is served by the swimming pool every morning. For lunch and dinner, the hotel has a great restaurant that looks out over the sea. In the evening they serve freshly grilled seafood. The prices are expensive but the quality is very good. The menu is mostly seafood but they do have other options.
+A breakfast buffet is served by the swimming pool every morning. For lunch and dinner, the hotel has a great restaurant that looks out over the sea. In the evening they serve freshly grilled seafood. The prices are high but the quality is very good. The menu is mostly seafood but they do have other options.
 
 Two nights a week there is live music after dinner. The hotel has a schedule of local bands who play dance music and even offer samba and rhumba lessons for hotel guests. Many visitors say this is a favorite feature of their hotel stay.
 
