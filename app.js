@@ -29,6 +29,10 @@ const state = {
   volume: 1,
   breakHandle: null,
 
+  studentInfo: null,
+  speakingRecordings: [],  // [{ questionId, part, topic, prompt, blob }]
+  reportStatus: 'idle',    // 'idle' | 'sending' | 'sent' | 'error'
+
   speakingIndex: 0,
   countdownHandle: null,
   prepHandle: null,
@@ -224,6 +228,15 @@ document.getElementById('registerForm').addEventListener('submit', (e) => {
     form.reportValidity();
     return;
   }
+  state.studentInfo = {
+    firstName: document.getElementById('fName').value.trim(),
+    lastName: document.getElementById('fLastName').value.trim(),
+    email: document.getElementById('fEmail').value.trim(),
+    country: document.getElementById('fCountry').value,
+    birthYear: document.getElementById('fYear').value,
+    city: document.getElementById('fCity').value.trim(),
+    gender: document.getElementById('fGender').value
+  };
   showScreen('screen-welcome');
 });
 
@@ -642,6 +655,7 @@ function setupAudioPlayer(task) {
 // ---------------------------------------------------------------------
 document.getElementById('btnSpeakingStart').addEventListener('click', () => {
   state.speakingIndex = 0;
+  state.speakingRecordings = [];
   showScreen('screen-speaking-task');
   renderSpeakingTask(0);
 });
@@ -750,7 +764,19 @@ async function startRecordingAuto(task) {
     state.mediaRecorder = recorder;
 
     recorder.addEventListener('dataavailable', (e) => state.audioChunks.push(e.data));
-    recorder.addEventListener('stop', () => stream.getTracks().forEach(t => t.stop()));
+    recorder.addEventListener('stop', () => {
+      stream.getTracks().forEach(t => t.stop());
+      if (state.audioChunks.length > 0) {
+        const blob = new Blob(state.audioChunks, { type: recorder.mimeType || 'audio/webm' });
+        state.speakingRecordings.push({
+          questionId: task.id,
+          part: task.part,
+          topic: task.topic,
+          prompt: task.prompt,
+          blob
+        });
+      }
+    });
     recorder.start();
 
     let remaining = task.speakSeconds;
@@ -791,6 +817,7 @@ function finishRecording() {
   setTimeout(() => {
     if (isLast) {
       showScreen('screen-finish');
+      submitReport();
     } else {
       state.speakingIndex++;
       const nextIndex = state.speakingIndex;
@@ -798,6 +825,129 @@ function finishRecording() {
       startSpeakingSequence(nextIndex);
     }
   }, 1200);
+}
+
+// ---------------------------------------------------------------------
+// Scoring — used to build the report sent to the teacher
+// ---------------------------------------------------------------------
+function computeSectionScore(sectionKey) {
+  const tasks = TEST_DATA[sectionKey].tasks;
+  const answers = sectionKey === 'reading' ? state.readingAnswers : state.listeningAnswers;
+  let correct = 0;
+  let total = 0;
+  const breakdown = [];
+
+  tasks.forEach((task) => {
+    task.questions.forEach((q) => {
+      total++;
+      const raw = answers[q.id];
+      const answered = raw !== undefined;
+      let studentAnswer, correctAnswer, isCorrect;
+
+      if (task.type === 'match3') {
+        // raw is already the chosen label ("Passage A" / "Passage B" / "Both Passages")
+        studentAnswer = answered ? raw : null;
+        correctAnswer = q.answer;
+        isCorrect = answered && raw === q.answer;
+      } else {
+        // raw is the chosen option's index, as a string (radio input value)
+        const idx = answered ? Number(raw) : null;
+        studentAnswer = answered ? q.options[idx] : null;
+        correctAnswer = q.options[q.answer];
+        isCorrect = answered && idx === q.answer;
+      }
+
+      if (isCorrect) correct++;
+      breakdown.push({
+        questionText: q.text || (q.speaker ? `Speaker ${q.speaker}: ${q.line}` : q.line) || '',
+        studentAnswer,
+        correctAnswer,
+        isCorrect
+      });
+    });
+  });
+
+  return {
+    correct,
+    total,
+    percent: total ? Math.round((correct / total) * 100) : 0,
+    breakdown
+  };
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result.split(',')[1]); // strip "data:...;base64,"
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+// Uploads every recorded answer to Supabase Storage, then sends the full
+// report (student info + Reading/Listening scores + Speaking recording
+// links) to the teacher's email via a Netlify Function. Both endpoints
+// are server-side (netlify/functions/) since they need secret credentials
+// that must never live in the browser.
+async function submitReport() {
+  state.reportStatus = 'sending';
+  renderReportStatus();
+
+  try {
+    const sessionId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    const speaking = [];
+    for (const rec of state.speakingRecordings) {
+      const base64 = await blobToBase64(rec.blob);
+      const uploadRes = await fetch('/.netlify/functions/upload-recording', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          questionId: rec.questionId,
+          mimeType: rec.blob.type || 'audio/webm',
+          audioBase64: base64
+        })
+      });
+      if (!uploadRes.ok) throw new Error(`Upload failed for ${rec.questionId}`);
+      const { url } = await uploadRes.json();
+      speaking.push({ part: rec.part, topic: rec.topic, prompt: rec.prompt, audioUrl: url });
+    }
+
+    const payload = {
+      student: state.studentInfo,
+      reading: computeSectionScore('reading'),
+      listening: computeSectionScore('listening'),
+      speaking
+    };
+
+    const sendRes = await fetch('/.netlify/functions/send-report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!sendRes.ok) throw new Error('send-report failed');
+
+    state.reportStatus = 'sent';
+  } catch (err) {
+    console.error('Report submission error:', err);
+    state.reportStatus = 'error';
+  }
+  renderReportStatus();
+}
+
+function renderReportStatus() {
+  const el = document.getElementById('reportStatus');
+  if (!el) return;
+  if (state.reportStatus === 'sending') {
+    el.textContent = 'Отправляем результаты преподавателю…';
+  } else if (state.reportStatus === 'sent') {
+    el.textContent = 'Результаты отправлены преподавателю.';
+  } else if (state.reportStatus === 'error') {
+    el.textContent = 'Не удалось отправить результаты автоматически — преподаватель проверит их вручную.';
+  } else {
+    el.textContent = '';
+  }
 }
 
 // ---------------------------------------------------------------------
