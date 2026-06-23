@@ -57,6 +57,26 @@ function formatTime(totalSeconds) {
   return `${m}:${r.toString().padStart(2, '0')}`;
 }
 
+// ---------------------------------------------------------------------
+// Prevent accidental tab close / reload mid-test. Browsers no longer
+// allow custom dialog text for security reasons — the message string
+// below is ignored by all modern browsers, which show their own fixed
+// "Leave site? Changes you made may not be saved" wording instead, but
+// the leave/stay choice itself still works. Armed once registration is
+// submitted; disarmed on the two legitimate end states (Finish and
+// Test Expired) so closing the tab there is silent.
+function handleBeforeUnload(e) {
+  e.preventDefault();
+  e.returnValue = '';
+  return '';
+}
+function armUnloadGuard() {
+  window.addEventListener('beforeunload', handleBeforeUnload);
+}
+function disarmUnloadGuard() {
+  window.removeEventListener('beforeunload', handleBeforeUnload);
+}
+
 function showScreen(id) {
   document.querySelectorAll('audio, video').forEach(el => { try { el.pause(); } catch (e) {} });
   const target = document.getElementById(id);
@@ -124,6 +144,7 @@ function expireTest() {
     try { state.mediaRecorder.stop(); } catch (e) {}
   }
   if (state.micStream) state.micStream.getTracks().forEach(t => t.stop());
+  disarmUnloadGuard();
   showScreen('screen-test-expired');
 }
 
@@ -247,6 +268,7 @@ document.getElementById('registerForm').addEventListener('submit', (e) => {
   };
   showScreen('screen-welcome');
   playWelcomeVideoAutoplay();
+  armUnloadGuard();
 });
 
 // ---------------------------------------------------------------------
@@ -714,12 +736,14 @@ function setupAudioPlayer(task) {
 // in-test question videos); "К вопросам!" can be clicked at any time,
 // it doesn't wait for the video to finish. onContinue runs once, when
 // that button is clicked.
-function showPartIntroVideo(videoUrl, onContinue) {
+function showPartIntroVideo(part, videoUrl, onContinue) {
   showScreen('screen-speaking-part-video');
   const video = document.getElementById('partIntroVideo');
   const errorEl = document.getElementById('partIntroVideoError');
   const btn = document.getElementById('btnPartIntroNext');
+  const label = document.getElementById('partIntroLabel');
 
+  if (label) label.textContent = `Speaking / Part ${part}`;
   errorEl.style.display = 'none';
   video.style.display = 'block';
   video.src = videoUrl;
@@ -758,7 +782,7 @@ function goToSpeakingTask(index) {
 
   if (intro && !state.shownPartIntros[task.part]) {
     state.shownPartIntros[task.part] = true;
-    showPartIntroVideo(intro.videoUrl, () => {
+    showPartIntroVideo(task.part, intro.videoUrl, () => {
       showScreen('screen-speaking-task');
       renderSpeakingTask(index);
       startSpeakingSequence(index);
@@ -777,11 +801,20 @@ function renderSpeakingTask(index) {
   document.getElementById('speakingTimer').textContent = '—';
   document.getElementById('speakingStatus').textContent = '';
 
-  // Part 2 gets the cue-card treatment (title + bullet list look like a
-  // real IELTS cue card); Parts 1 and 3 keep the plain prompt bubble.
+  // Parts 1 and 3: the question is only delivered via the video, not
+  // shown as text. Part 2 is different — the cue card is reference
+  // material the student is meant to read while preparing (just like
+  // the physical card in the real IELTS exam), so it stays visible.
   const promptEl = document.getElementById('speakingPrompt');
-  promptEl.textContent = task.prompt;
-  promptEl.classList.toggle('cue-card', task.part === 2);
+  if (task.part === 2) {
+    promptEl.textContent = task.prompt;
+    promptEl.classList.add('cue-card');
+    promptEl.style.display = 'block';
+  } else {
+    promptEl.textContent = '';
+    promptEl.classList.remove('cue-card');
+    promptEl.style.display = 'none';
+  }
 
   const video = document.getElementById('speakingVideo');
   video.src = task.videoUrl;
@@ -1036,6 +1069,7 @@ function finishRecording() {
   const isLast = state.speakingIndex >= TEST_DATA.speaking.tasks.length - 1;
   setTimeout(() => {
     if (isLast) {
+      disarmUnloadGuard();
       showScreen('screen-finish');
       playOutroVideo();
       submitReport();
