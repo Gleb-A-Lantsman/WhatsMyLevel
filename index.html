@@ -4,6 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RE-Academy — Вступительный тест</title>
+<meta name="description" content="Какой у вас уровень английского на самом деле? Пройдите короткий вступительный тест RE-Academy — чтение, аудирование и говорение — и узнайте свой уровень за 65 минут.">
+
+<!-- Open Graph / Telegram / WhatsApp / Facebook link preview -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Какой у вас уровень английского? Пройдите тест RE-Academy">
+<meta property="og:description" content="Три части, 65 минут, никаких скрытых ловушек — только честная проверка вашего English level. Нажмите и узнайте, на что вы способны.">
+<meta property="og:image" content="https://re-entry-test.netlify.app/assets/logo.png">
+<meta property="og:url" content="https://re-entry-test.netlify.app/">
+<meta property="og:locale" content="ru_RU">
+
+<!-- Twitter Card (also used as a fallback by several other link-preview bots) -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Какой у вас уровень английского? Пройдите тест RE-Academy">
+<meta name="twitter:description" content="Три части, 65 минут — узнайте свой уровень английского прямо сейчас.">
+<meta name="twitter:image" content="https://re-entry-test.netlify.app/assets/logo.png">
 <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
@@ -16,6 +31,7 @@
 <!-- Top status bar: label / progress bar / countdown timer       -->
 <!-- ============================================================ -->
 <div id="topbar">
+  <img class="topbar-logo" src="assets/logo.png" alt="RE-Academy">
   <div class="topbar-label"><span id="topbarLabel">Чтение</span></div>
   <div class="progress-track" id="topbarProgress"></div>
   <div class="topbar-timer">
@@ -354,6 +370,7 @@
         <video id="partIntroVideo" class="speaking-video" playsinline></video>
       </div>
       <p class="audio-error" id="partIntroVideoError" style="max-width:100%;"></p>
+      <img class="speaking-logo" src="assets/logo.png" alt="RE-Academy">
       <div class="card-actions"><button id="btnPartIntroNext">К вопросам!</button></div>
     </div>
   </div>
@@ -372,6 +389,7 @@
       </div>
       <p class="audio-error" id="speakingVideoError" style="max-width:100%;"></p>
       <div class="speaking-prompt" id="speakingPrompt"></div>
+      <img class="speaking-logo" src="assets/logo.png" alt="RE-Academy">
       <div class="speaking-timer" id="speakingTimer">—</div>
       <div class="speaking-status" id="speakingStatus">Нажмите «Следующий вопрос», чтобы начать.</div>
       <div class="speaking-actions">
@@ -440,6 +458,8 @@
     </div>
   </div>
 </div>
+
+<div id="copyrightFooter">© 2014–2026 RE-Academy</div>
 
 <script src="data.js"></script>
 <script src="app.js"></script>
