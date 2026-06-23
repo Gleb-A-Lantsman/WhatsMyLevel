@@ -5,11 +5,6 @@
  * This is the file to edit when you want to add the Listening questions,
  * change a Reading passage, or add more Speaking prompts — nothing in
  * here needs to touch app.js or styles.css.
- *
- * NOTE on the Reading passages below: they are original content written
- * for RE-Academy, in the same format/difficulty as the reference test
- * (a 6-statement matching task, an 8-question single-passage task, and a
- * 10-question email task) — not copied from any third-party test.
  * -----------------------------------------------------------------------
  */
 
