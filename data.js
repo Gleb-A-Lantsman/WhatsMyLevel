@@ -5,6 +5,11 @@
  * This is the file to edit when you want to add the Listening questions,
  * change a Reading passage, or add more Speaking prompts — nothing in
  * here needs to touch app.js or styles.css.
+ *
+ * NOTE on the Reading passages below: they are original content written
+ * for RE-Academy, in the same format/difficulty as the reference test
+ * (a 6-statement matching task, an 8-question single-passage task, and a
+ * 10-question email task) — not copied from any third-party test.
  * -----------------------------------------------------------------------
  */
 
@@ -17,6 +22,14 @@ const TEST_DATA = {
   // how long the break lasts.
   // ===================================================================
   breakSeconds: 5 * 60,
+
+  // ===================================================================
+  // WELCOME VIDEO — plays on the "Добро пожаловать" screen, above the
+  // 3 section icons. Tap-to-play (does not autoplay).
+  // ===================================================================
+  welcomeVideo: {
+    videoUrl: 'video/video0-0.mp4'
+  },
 
   // ===================================================================
   // AUDIO CHECK — plays once before the test starts, on the audio
@@ -149,10 +162,10 @@ Helen`
     { id: 'r3q9', text: 'Which day was the party?', options: ['Friday', 'Saturday', 'Sunday', 'Monday'], answer: 1 },
     { id: 'r3q10', text: 'What is Helen’s email mainly about?', options: ['Thanking people for going to her party', 'Thanking people for helping her', 'Thanking people for visiting her', 'Thanking people for a special present'], answer: 0 }
   ]
-},
-    ]     
-  },     
-  
+}
+    ]
+  },
+
   // ===================================================================
   // LISTENING — 25 minutes, 3 tasks.
   //
@@ -241,7 +254,33 @@ Helen`
   //   video/video1-1.mp4 … video/video1-8.mp4   (Part 1, 8 questions)
   //   video/video2-1.mp4                         (Part 2, 1 question)
   //   video/video3-1.mp4 … video/video3-6.mp4   (Part 3, 6 questions)
+  //
+  // Plus the standalone "before/after" videos handled separately from
+  // the question list below:
+  //   video/video1-0.mp4  — Part 1 instructions (own screen, "К вопросам!")
+  //   video/video2-0.mp4  — Part 2 instructions (own screen, "К вопросам!")
+  //   video/video2-2.mp4  — "Can you start speaking now please?" — plays
+  //                          right after the 1-minute Part 2 prep ends
+  //                          (or the student skips prep), THEN recording
+  //                          starts the instant this one finishes.
+  //   video/video3-0.mp4  — Part 3 instructions (own screen, "К вопросам!")
+  //   video/video3-7.mp4  — "Well done" — plays on the Finish screen
+  //                          after the last Speaking answer is submitted.
   // ===================================================================
+  speakingIntros: {
+    1: { videoUrl: 'video/video1-0.mp4' },
+    2: { videoUrl: 'video/video2-0.mp4' },
+    3: { videoUrl: 'video/video3-0.mp4' }
+  },
+
+  speakingPart2Prompt: {
+    videoUrl: 'video/video2-2.mp4'
+  },
+
+  speakingOutro: {
+    videoUrl: 'video/video3-7.mp4'
+  },
+
   speaking: {
     tasks: [
       // ---- Part 1, Topic: Your city ----
