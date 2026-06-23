@@ -312,6 +312,11 @@ document.getElementById('btnReadingStart').addEventListener('click', () => {
 function renderReadingTask(index) {
   const task = TEST_DATA.reading.tasks[index];
 
+  // Each new task starts both panes scrolled back to the top, instead
+  // of keeping whatever scroll position the previous task left behind.
+  document.getElementById('readingPassagePane').scrollTop = 0;
+  document.getElementById('readingQuestionsPane').scrollTop = 0;
+
   // ---- Left pane: instructions + passage(s) ----
   let passageHtml = '';
   if (task.partLabel) {
@@ -504,6 +509,10 @@ document.getElementById('btnListeningStart').addEventListener('click', () => {
 function renderListeningTask(index) {
   const task = TEST_DATA.listening.tasks[index];
 
+  // Same as Reading — start each new task scrolled to the top.
+  document.getElementById('listeningPassagePane').scrollTop = 0;
+  document.getElementById('listeningQuestionsPane').scrollTop = 0;
+
   // The previous task's <audio> element is about to be destroyed by the
   // innerHTML rebuild below — pause it first so it doesn't keep playing
   // in the background after it's gone from the DOM.
@@ -664,20 +673,48 @@ function renderSpeakingTask(index) {
   const task = TEST_DATA.speaking.tasks[index];
 
   document.getElementById('speakingPartLabel').textContent = `Part ${task.part} / ${task.topic}`;
-  document.getElementById('speakingPrompt').textContent = task.prompt;
   document.getElementById('speakingTimer').textContent = '—';
   document.getElementById('speakingStatus').textContent = 'Нажмите «Следующий вопрос», чтобы начать.';
+
+  // Part 2 gets the cue-card treatment (title + bullet list look like a
+  // real IELTS cue card); Parts 1 and 3 keep the plain prompt bubble.
+  const promptEl = document.getElementById('speakingPrompt');
+  promptEl.textContent = task.prompt;
+  promptEl.classList.toggle('cue-card', task.part === 2);
 
   const video = document.getElementById('speakingVideo');
   video.src = task.videoUrl;
   video.volume = state.volume;
+  video.muted = false;
   video.style.display = 'none';
   document.getElementById('speakingVideoError').style.display = 'none';
+
+  // Replay button — hidden until the video has played through once.
+  const replayBtn = document.getElementById('btnSpeakingReplay');
+  replayBtn.style.display = 'none';
+  replayBtn.onclick = () => replaySpeakingVideo(task);
 
   const btn = document.getElementById('btnSpeakingNext');
   btn.disabled = false;
   btn.textContent = 'Следующий вопрос';
   btn.onclick = () => startSpeakingSequence(index);
+}
+
+// Plays the current video again on demand (after it already finished
+// once) without restarting the countdown/prep/recording sequence —
+// just a re-watch, audio included.
+function replaySpeakingVideo(task) {
+  const video = document.getElementById('speakingVideo');
+  const replayBtn = document.getElementById('btnSpeakingReplay');
+  replayBtn.style.display = 'none';
+  video.muted = false;
+  video.currentTime = 0;
+  video.play().catch(() => {
+    // If the browser still blocks unmuted playback here, there's
+    // nothing more we can do without another user gesture — the click
+    // on the replay button itself usually satisfies the policy.
+  });
+  video.onended = () => { replayBtn.style.display = 'inline-flex'; };
 }
 
 function startSpeakingSequence(index) {
@@ -686,6 +723,8 @@ function startSpeakingSequence(index) {
 
   const video = document.getElementById('speakingVideo');
   const errorEl = document.getElementById('speakingVideoError');
+  const replayBtn = document.getElementById('btnSpeakingReplay');
+  replayBtn.style.display = 'none';
   video.style.display = 'block';
   document.getElementById('speakingStatus').textContent = 'Слушайте вопрос…';
 
@@ -693,6 +732,7 @@ function startSpeakingSequence(index) {
   const proceedToCountdown = () => {
     if (proceeded) return; // guard against both 'ended' and 'error' firing
     proceeded = true;
+    replayBtn.style.display = 'inline-flex';
     startCountdown(task);
   };
 
@@ -704,7 +744,27 @@ function startSpeakingSequence(index) {
   };
 
   try { video.currentTime = 0; } catch (e) { /* duration not known yet */ }
-  video.play().catch(() => video.onerror());
+
+  // Auto-advancing between questions happens inside a setTimeout, which
+  // browsers don't treat as a user gesture — so an unmuted autoplay()
+  // call there gets silently blocked (the video plays, but with no
+  // sound, and no error is thrown). Try unmuted first; if the browser
+  // rejects it, fall back to muted playback and show a one-tap "Включить
+  // звук" prompt instead of leaving the student stuck with a mute video.
+  video.muted = false;
+  video.play().catch(() => {
+    video.muted = true;
+    document.getElementById('speakingStatus').innerHTML =
+      'Звук блокирован браузером — <button type="button" id="btnUnmuteVideo" class="link-btn">нажмите, чтобы включить звук</button>';
+    video.play().catch(() => video.onerror());
+    const unmuteBtn = document.getElementById('btnUnmuteVideo');
+    if (unmuteBtn) {
+      unmuteBtn.addEventListener('click', () => {
+        video.muted = false;
+        document.getElementById('speakingStatus').textContent = 'Слушайте вопрос…';
+      });
+    }
+  });
 }
 
 function startCountdown(task) {
@@ -731,6 +791,17 @@ function startPrep(task) {
   document.getElementById('speakingStatus').textContent = 'Время на подготовку…';
   let remaining = task.prepSeconds;
   document.getElementById('speakingTimer').textContent = formatTime(remaining);
+
+  // Same pattern as "Я закончил(а) отвечать!" during recording — lets a
+  // student who's ready early skip straight to the recording instead of
+  // waiting out the full prep minute.
+  const btn = document.getElementById('btnSpeakingNext');
+  btn.disabled = false;
+  btn.textContent = 'Я закончил(а) готовиться!';
+  btn.onclick = () => {
+    clearInterval(state.prepHandle);
+    startRecordingAuto(task);
+  };
 
   clearInterval(state.prepHandle);
   state.prepHandle = setInterval(() => {
