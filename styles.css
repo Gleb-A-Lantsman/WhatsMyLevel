@@ -503,14 +503,51 @@ input:invalid:not(:placeholder-shown) { border-color: var(--color-danger); }
   background: #fff; border-radius: var(--radius-lg); box-shadow: var(--shadow-card);
   max-width: 620px; width: 100%; padding: 32px 36px 30px;
 }
+
+/* Video wrapper holds the video + the replay button, so the button can
+   be positioned relative to the video frame regardless of aspect ratio. */
+.speaking-video-wrap {
+  position: relative;
+  margin-bottom: 16px;
+}
 .speaking-video {
   width: 100%;
+  height: 280px;
   max-height: 280px;
   background: #111827;
   border-radius: var(--radius-md);
-  margin-bottom: 16px;
   display: none;
+  /* Fill the frame and crop overflow instead of letterboxing — removes
+     the black bars on the sides when the source video's aspect ratio
+     doesn't exactly match the player's. */
+  object-fit: cover;
+  object-position: center;
 }
+
+/* Replay button: bottom-right corner of the video, inset slightly from
+   the edges (standard placement for video controls — out of the way of
+   the subject's face, which tends to be centered/upper-frame, and
+   reachable with a thumb on mobile without covering content). */
+.replay-btn {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(17, 24, 39, 0.65);
+  color: #fff;
+  font-size: 19px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+}
+.replay-btn:hover:not(:disabled) { background: rgba(17, 24, 39, 0.85); }
+
 .speaking-eyebrow { font-size: 12.5px; color: var(--color-text-soft); font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; margin-bottom: 10px; }
 .speaking-prompt {
   background: var(--color-bg-soft);
@@ -520,6 +557,20 @@ input:invalid:not(:placeholder-shown) { border-color: var(--color-danger); }
   font-size: 14.5px;
   margin-bottom: 22px;
 }
+
+/* Part 2 cue card — styled like the physical IELTS cue card students
+   are handed in the real exam: cream card stock, a rule under the
+   topic line, and the "You should say:" bullets in a clean list. */
+.speaking-prompt.cue-card {
+  background: #fdf8ee;
+  border: 1px solid #e8dcb8;
+  border-radius: var(--radius-md);
+  padding: 22px 26px;
+  font-size: 14.5px;
+  line-height: 1.7;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
 .speaking-timer {
   font-size: 26px; font-weight: 800; text-align: center; margin: 6px 0 20px;
   color: var(--color-primary); font-variant-numeric: tabular-nums;
@@ -533,6 +584,20 @@ input:invalid:not(:placeholder-shown) { border-color: var(--color-danger); }
 }
 .rec-label { font-weight: 700; color: var(--color-danger); letter-spacing: 0.04em; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* Inline text-style button, used for the "click to unmute" prompt that
+   appears inside .speaking-status if autoplay-with-sound gets blocked. */
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.link-btn:hover { color: var(--color-primary-dark); background: none; }
 
 /* ---------------------------------------------------------------- */
 /* Responsive                                                        */
