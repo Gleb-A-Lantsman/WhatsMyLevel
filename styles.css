@@ -567,6 +567,16 @@ input:invalid:not(:placeholder-shown) { border-color: var(--color-danger); }
 /* ---------------------------------------------------------------- */
 /* Speaking section                                                  */
 /* ---------------------------------------------------------------- */
+/* Stacks the logo above the speaking card, both centered — used on the
+   Part-intro screens and the question screens. */
+.speaking-card-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 620px;
+  width: 100%;
+}
+
 .speaking-card {
   background: #fff; border-radius: var(--radius-lg); box-shadow: var(--shadow-card);
   max-width: 620px; width: 100%; padding: 32px 36px 30px;
@@ -641,10 +651,11 @@ input:invalid:not(:placeholder-shown) { border-color: var(--color-danger); }
 
 .speaking-logo {
   display: block;
-  height: 32px;
+  height: 84px;
   width: auto;
-  margin: 4px auto 14px;
-  border-radius: 6px;
+  margin: 0 auto 20px;
+  border-radius: 10px;
+  box-shadow: var(--shadow-card);
 }
 
 .speaking-timer {
