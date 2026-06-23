@@ -110,6 +110,35 @@ input:invalid:not(:placeholder-shown) { border-color: var(--color-danger); }
   z-index: 20;
 }
 #topbar.visible { display: flex; }
+.topbar-logo {
+  height: 28px;
+  width: auto;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+/* ---------------------------------------------------------------- */
+/* Persistent copyright footer — visible on every screen            */
+/* ---------------------------------------------------------------- */
+#copyrightFooter {
+  position: fixed;
+  bottom: 6px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 11px;
+  color: var(--color-text-soft);
+  opacity: 0.65;
+  z-index: 5;
+  pointer-events: none;
+}
+/* Hidden during the two-pane Reading/Listening screens, where it would
+   sit on top of the "Далее" button at the bottom of the questions pane.
+   The topbar logo already provides branding on those screens. */
+.screen#screen-reading-task.active ~ #copyrightFooter,
+.screen#screen-listening-task.active ~ #copyrightFooter {
+  display: none;
+}
 #topbar .topbar-label {
   display: flex;
   align-items: center;
@@ -608,6 +637,14 @@ input:invalid:not(:placeholder-shown) { border-color: var(--color-danger); }
   font-size: 14.5px;
   line-height: 1.7;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.speaking-logo {
+  display: block;
+  height: 32px;
+  width: auto;
+  margin: 4px auto 14px;
+  border-radius: 6px;
 }
 
 .speaking-timer {
