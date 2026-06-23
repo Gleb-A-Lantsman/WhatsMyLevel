@@ -39,128 +39,122 @@ const TEST_DATA = {
     durationSeconds: 25 * 60,
     tasks: [
 
-      // --- Task 0: vocabulary-in-context, 6 sentences, 4 options each ---
-      // NOTE: the sentences you sent for this task are EF SET's own
-      // copyrighted test content (same source as the festival/hotel/email
-      // screenshots earlier) — typing them out directly doesn't change
-      // that it's their material, so I've written 6 original sentences
-      // testing the same kind of near-synonym vocabulary choice instead,
-      // same format and difficulty. Swap the text below anytime.
-      {
-        id: 'r0',
-        type: 'single4',
-        partLabel: 'Part 1',
-        instructions: 'You will read 6 sentences. Choose the word or phrase that best completes each sentence.',
-        passages: [],
-        questions: [
-          { id: 'r0q1', text: 'The bus was forced to stop because of a sudden ______ in the engine.', options: ['fault', 'mistake', 'error', 'flaw'], answer: 0 },
-          { id: 'r0q2', text: 'Office furniture and stationery are sold on the third ______ of the department store.', options: ['stage', 'platform', 'floor', 'base'], answer: 2 },
-          { id: 'r0q3', text: 'Maria warned that she would ______ her daughter from attending the party if her grades didn\'t improve.', options: ['refuse', 'forbid', 'deny', 'exclude'], answer: 1 },
-          { id: 'r0q4', text: 'The undeniable ______ of the conference was the closing speech by the Nobel laureate.', options: ['highlight', 'attention', 'headline', 'emphasis'], answer: 0 },
-          { id: 'r0q5', text: 'You\'ve been an ______ source of support since I moved to this city.', options: ['intense', 'infinite', 'enormous', 'immense'], answer: 3 },
-          { id: 'r0q6', text: 'The mountain gorilla is officially classified as a critically ______ species.', options: ['endangered', 'dangerous', 'exposed', 'fragile'], answer: 0 }
-        ]
-      },
+// --- Task 0: vocabulary-in-context, 6 sentences, 4 options each ---
+{
+  id: 'r0',
+  type: 'single4',
+  partLabel: 'Part 1',
+  instructions: 'You will read 6 sentences. Choose the word or phrase that best completes each sentence.',
+  passages: [],
+  questions: [
+    { id: 'r0q1', text: 'The plane finally arrived after a ______ of three hours.', options: ['slowing', 'stall', 'halt', 'delay'], answer: 3 },
+    { id: 'r0q2', text: 'Appliances and electronics are sold on the second ______.', options: ['landing', 'stage', 'floor', 'base'], answer: 2 },
+    { id: 'r0q3', text: 'Jennifer said she would ______ her son to play online games if he got low marks on his report card.', options: ['prevent', 'forbid', 'deny', 'exclude'], answer: 1 },
+    { id: 'r0q4', text: 'A notable ______ of the symposium was the speech by a famous entrepreneur.', options: ['feature', 'attention', 'headline', 'emphasis'], answer: 0 },
+    { id: 'r0q5', text: 'You have been an ______ help since I moved out here a few months ago.', options: ['intense', 'infinite', 'excessive', 'enormous'], answer: 3 },
+    { id: 'r0q6', text: 'The black rhinoceros is listed as a critically ______ species.', options: ['endangered', 'dangerous', 'exposed', 'weak'], answer: 0 }
+  ]
+},
 
-      // --- Task 1: matching task (Passage A / Passage B / Both) ------
-      {
-        id: 'r1',
-        type: 'match3',
-        instructions: 'Read both passages and the 6 statements. Decide if each statement is supported by:',
-        instructionList: ['Passage A', 'Passage B', 'Both Passages'],
-        passages: [
-          {
-            label: 'Passage A',
-            title: 'The Edinburgh Fringe Festival',
-            text: `The Edinburgh Fringe Festival is the largest arts festival in the world. It takes place in the Scottish capital every August and lasts for three weeks. The festival began in 1947, when eight theatre companies performed shows outside the official Edinburgh International Festival without an invitation. Today, thousands of performers from comedy, theatre, dance and music take part, and most shows require a ticket. Visitors can also enjoy free street performances in the city centre, as well as food stalls selling everything from haggis rolls to international snacks.`
-          },
-          {
-            label: 'Passage B',
-            title: 'The Avignon Festival',
-            text: `The Avignon Festival is one of France's most important celebrations of theatre and performance. It is held each July in the historic city of Avignon and runs for around three weeks. The festival was founded in 1947 by the director Jean Vilar, who wanted to bring high-quality theatre to a wider audience outside Paris. The main programme takes place in grand historic venues, including the Palace of the Popes, and most performances require tickets bought in advance. Alongside the official festival, an open, unticketed Fringe programme fills the streets and courtyards with independent shows, and local cafés serve traditional Provençal dishes to visitors throughout the run.`
-          }
-        ],
-        options: ['Passage A', 'Passage B', 'Both Passages'],
-        questions: [
-          { id: 'r1q1', text: 'The passage explains how the festival began.', answer: 'Both Passages' },
-          { id: 'r1q2', text: 'The passage says how long the festival lasts.', answer: 'Both Passages' },
-          { id: 'r1q3', text: 'The passage suggests what is available to eat at the festival.', answer: 'Both Passages' },
-          { id: 'r1q4', text: 'The passage says that people have to pay to attend some performances.', answer: 'Both Passages' },
-          { id: 'r1q5', text: 'The passage describes a building used as a festival venue.', answer: 'Passage B' },
-          { id: 'r1q6', text: 'The passage explains where the festival takes place.', answer: 'Both Passages' }
-        ]
-      },
+// --- Task 1: matching task (Passage A / Passage B / Both) ------
+{
+  id: 'r1',
+  type: 'match3',
+  instructions: 'Read both passages and the 6 statements. Decide if each statement is supported by:',
+  instructionList: ['Passage A', 'Passage B', 'Both Passages'],
+  passages: [
+    {
+      label: 'Passage A',
+      title: 'The Notting Hill Carnival',
+      text: `The Notting Hill Carnival is one of the world's largest street festivals. It is held in the Notting Hill area of West London. Over one million people attend the carnival, which takes place over three days every August. The event started in 1966 as a celebration of Caribbean culture, with people from the West Indies, who had immigrated to London, organizing the festival. Nowadays, the event is very multi-cultural and people from all the different communities of London come together at the festival. However, the music, costumes, floats and food still have a strong Caribbean influence.`
+    },
+    {
+      label: 'Passage B',
+      title: 'The Rio de Janeiro Carnival',
+      text: `The Rio de Janeiro Carnival is the biggest and most famous street festival in the world. It is held annually in the Brazilian city, over six days before the Christian festival of Lent. On each day, over two million people come out on to the streets of Rio to dance and play music. There are competitions between the different samba schools, with each school trying to have the best float, costume and music, as well as to be the best at samba dancing. These days, some of the main events are ticketed and held in stadiums.`
+    }
+  ],
+  options: ['Passage A', 'Passage B', 'Both Passages'],
+  questions: [
+    { id: 'r1q1', text: 'The passage explains how the carnival started.', answer: 'Passage A' },
+    { id: 'r1q2', text: 'The passage says how often the carnival is held.', answer: 'Both Passages' },
+    { id: 'r1q3', text: 'The passage suggests what is available to eat at the carnival.', answer: 'Passage A' },
+    { id: 'r1q4', text: 'The passage says that people have to pay for parts of the carnival.', answer: 'Passage B' },
+    { id: 'r1q5', text: 'The passage describes what people see and do at the carnival.', answer: 'Both Passages' },
+    { id: 'r1q6', text: 'The passage explains where the festival is held.', answer: 'Both Passages' }
+  ]
+},
 
-      // --- Task 2: single passage, 8 questions -------------------------
-      {
-        id: 'r2',
-        type: 'single4',
-        instructions: 'Read the passage about a hotel and choose the best answer for each question. There are 8 questions.',
-        passages: [
-          {
-            label: null,
-            title: 'Birch Lake Lodge',
-            text: `Looking for a quiet escape close to nature? Birch Lake Lodge is a small countryside hotel with just 40 rooms, many overlooking the lake. The lodge sits on the edge of a national park, so guests can borrow kayaks and bicycles included in the room price. Guided forest walks are also free, though horseback riding costs extra.
+// --- Task 2: single passage, 8 questions -------------------------
+{
+  id: 'r2',
+  type: 'single4',
+  instructions: 'Read the passage about a hotel and choose the best answer for each question. There are 8 questions.',
+  passages: [
+    {
+      label: null,
+      title: 'Laruna Hotel',
+      text: `This is a wonderful resort if you’re looking to get away for a week or two. This large hotel has over 400 rooms, many with a view of the ocean. If you want golden sand and fun in the sea then this is the resort for you. The hotel price includes Jet Skiing, waterskiing and swimming. You can even try sailing (additional costs apply).
 
-There's plenty to do beyond the water. A small climbing wall stands next to the lodge's indoor pool, and a games room offers table tennis and board games. The nearest town is just 4 miles away, with a weekly farmers' market. For those who prefer to stay close, the lodge can arrange a sunset boat trip on the lake.
+Other than water sports, there is plenty to do. There is a tennis court with a gym next to it in the local village. The city is only 10 miles away, where you can go shopping. In addition, the hotel can organize a day trip into the mountains. If you just want to relax, there is a massage room.
 
-Breakfast is served in the main hall every morning, included in the room rate. For dinner, the lodge restaurant focuses on locally grown vegetables and fish caught from the lake that day. Meals are reasonably priced and well reviewed, though the menu is fairly limited for vegetarians.
+A breakfast buffet is served by the swimming pool every morning. For lunch and dinner, the hotel has a great restaurant that looks out over the sea. In the evening they serve freshly grilled seafood. The prices are expensive but the quality is very good. The menu is mostly seafood but they do have other options.
 
-Three evenings a week, a local folk musician performs by the fireplace, and the lodge occasionally runs beginner woodworking workshops for guests. Past visitors often mention the workshops as a highlight of their stay.
+Two nights a week there is live music after dinner. The hotel has a schedule of local bands who play dance music and even offer samba and rhumba lessons for hotel guests. Many visitors say this is a favorite feature of their hotel stay.
 
-This lodge does not offer transport from the nearest airport.`
-          }
-        ],
-        questions: [
-          { id: 'r2q1', text: 'This passage is most likely from', options: ['a travel brochure.', 'an email about a vacation.', 'a guidebook to national parks.', 'a review of lodge restaurants.'], answer: 0 },
-          { id: 'r2q2', text: 'What is the main purpose of the passage?', options: ['To compare Birch Lake Lodge to other hotels nearby', 'To describe what Birch Lake Lodge offers its guests', 'To report on what past guests think of Birch Lake Lodge', 'To present what the author thinks is best about Birch Lake Lodge'], answer: 1 },
-          { id: 'r2q3', text: 'Which of the following is a feature at Birch Lake Lodge?', options: ['A climbing wall', 'A spa', 'A cinema', 'A golf course'], answer: 0 },
-          { id: 'r2q4', text: 'According to the passage, the lodge restaurant is', options: ['over-priced.', 'cheap.', 'poor quality.', 'reasonably priced.'], answer: 3 },
-          { id: 'r2q5', text: 'What must guests at Birch Lake Lodge pay extra for?', options: ['Kayaking', 'Bicycles', 'Forest walks', 'Horseback riding'], answer: 3 },
-          { id: 'r2q6', text: 'Which of the following is a favorite experience of many Birch Lake Lodge guests?', options: ['Going to the climbing wall', 'The woodworking workshops', 'Visiting the farmers\' market', 'Taking a boat trip'], answer: 1 },
-          { id: 'r2q7', text: 'Which description best fits Birch Lake Lodge?', options: ['A place designed to make families with young children comfortable', 'A quiet countryside retreat with outdoor activities', 'A hotel especially suited to people who love nightlife', 'A trip for those who enjoy shopping'], answer: 1 },
-          { id: 'r2q8', text: 'Which of the facts does the passage tell you about Birch Lake Lodge?', options: ['The number of rooms in the lodge', 'The language the staff speak', 'The country where it is located', 'The distance from the lodge to the airport'], answer: 0 }
-        ]
-      },
+This hotel offers free transfer from the airport.`
+    }
+  ],
+  questions: [
+    { id: 'r2q1', text: 'This passage is most likely from', options: ['a travel brochure.', 'an email about a vacation.', 'a map of an island.', 'an article about hotel food.'], answer: 0 },
+    { id: 'r2q2', text: 'What is the main purpose of the passage?', options: ['To compare the Laruna Hotel to other hotels in the area', 'To describe what the Laruna Hotel offers its guests', 'To report on what past guests think of the Laruna Hotel', 'To present what the author thinks is best about the Laruna Hotel'], answer: 1 },
+    { id: 'r2q3', text: 'Which of the following is a feature at the Laruna Hotel?', options: ['A tennis court', 'Shops', 'A massage room', 'A gym'], answer: 2 },
+    { id: 'r2q4', text: 'According to the passage, the Laruna Hotel restaurant is', options: ['over-priced.', 'cheap.', 'poor quality.', 'good value.'], answer: 3 },
+    { id: 'r2q5', text: 'What must guests at the Laruna Hotel pay extra for?', options: ['Waterskiing', 'Jet Skiing', 'Swimming', 'Sailing'], answer: 3 },
+    { id: 'r2q6', text: 'Which of the following is a favorite experience of many Laruna Hotel guests?', options: ['Going to the beach', 'Spending a day in the mountains', 'Taking Latin dance classes', 'Going shopping in the city'], answer: 2 },
+    { id: 'r2q7', text: 'Which description best fits the Laruna Hotel?', options: ['A place designed to make families with young children comfortable', 'A vacation that includes the beach and some taste of local culture', 'A hotel especially suited to people who love to hike in rugged landscapes', 'A trip for those who especially like night life'], answer: 1 },
+    { id: 'r2q8', text: 'Which of the facts does the passage tell you about the Laruna Hotel?', options: ['The country where it is located', 'The language the people there speak', 'The number of rooms in the hotel', 'The distance from the hotel to the beach'], answer: 2 }
+  ]
+},
 
-      // --- Task 3: email passage, 10 questions -------------------------
-      {
-        id: 'r3',
-        type: 'single4',
-        instructions: 'Read the email about a farewell party and choose the best answer for each question. There are 10 questions.',
-        passages: [
-          {
-            label: null,
-            title: null,
-            text: `Dear everyone,
 
-Thank you all so much for organizing my farewell party at the office last night! It really was a wonderful surprise. James, thank you for baking that incredible chocolate cake — everyone wanted the recipe. And thanks to Priya for putting together the photo slideshow; I didn't expect to laugh and cry at the same time!
+// --- Task 3: email passage, 10 questions -------------------------
+{
+  id: 'r3',
+  type: 'single4',
+  instructions: 'Read the email about a birthday party and choose the best answer for each question. There are 10 questions.',
+  passages: [
+    {
+      label: null,
+      title: null,
+      text: `My dear friends,
 
-I'm so grateful for the gifts too. The scarf is beautiful, and the colour is exactly my style. The bracelet is stunning as well — I'll wear it at my new job on Monday. I think my sister will love it when she visits next month.
+Thank you SO much for coming to my birthday party yesterday! I had such a good time with you all. Patrick, thanks for being the grill master – the meat was delicious. And thanks to Nikki for preparing all those salads. They were so tasty – especially the green salad with grilled vegetables. And Tom and Claire, thanks for lending us your inflatable swimming pool – the children loved it, especially because it was such a hot day.
 
-Oh, and Marcus — you left your umbrella at my desk. Don't worry, I'll bring it to your house this weekend, before I move out of the city on Friday.
+I also love all of my gifts. The hat is perfect; I love the color. And the earrings are gorgeous. I will wear them tonight at the restaurant. I'm sure my mum will love them, too.
 
-Thank you again, everyone. I'll miss you all so much.
+And by the way, Peter, you forgot your sunglasses at my house, but don’t worry, I’ll bring them to the office tomorrow.
 
-With love,
-Daniela`
-          }
-        ],
-        questions: [
-          { id: 'r3q1', text: 'Where was Daniela\'s party held?', options: ['At a restaurant', 'At the office', 'At a park', 'At Daniela\'s flat'], answer: 1 },
-          { id: 'r3q2', text: 'Who baked the cake?', options: ['James', 'Priya', 'Marcus', 'Daniela\'s sister'], answer: 0 },
-          { id: 'r3q3', text: 'Who made the photo slideshow?', options: ['James', 'Priya', 'Marcus', 'Daniela'], answer: 1 },
-          { id: 'r3q4', text: 'Which present will Daniela wear at her new job?', options: ['A scarf', 'A bracelet', 'A necklace', 'A watch'], answer: 1 },
-          { id: 'r3q5', text: 'Who will see the bracelet next month?', options: ['James', 'Priya', 'Marcus', 'Daniela\'s sister'], answer: 3 },
-          { id: 'r3q6', text: 'Why did Daniela mention Marcus in the email?', options: ['To thank him for a gift', 'To ask him to bring something back', 'To tell him she has his umbrella', 'To invite him to her new job'], answer: 2 },
-          { id: 'r3q7', text: 'What does Daniela plan to do this weekend?', options: ['Bake a cake', 'Return Marcus\'s umbrella', 'Buy a scarf', 'Start her new job'], answer: 1 },
-          { id: 'r3q8', text: 'When does Daniela start her new job?', options: ['Today', 'This weekend', 'Monday', 'Friday'], answer: 2 },
-          { id: 'r3q9', text: 'When is Daniela moving out of the city?', options: ['Today', 'This weekend', 'Monday', 'Friday'], answer: 3 },
-          { id: 'r3q10', text: 'What is Daniela\'s email mainly about?', options: ['Thanking people for organizing her party', 'Thanking people for her new job', 'Thanking people for visiting her', 'Thanking people for lending equipment'], answer: 0 }
-        ]
-      }
-    ]
-  },
+Thanks again to all of you! Enjoy the rest of your Sunday.
+
+Lots of love,
+
+Helen`
+    }
+  ],
+  questions: [
+    { id: 'r3q1', text: 'When is Helen’s birthday?', options: ['Spring', 'Summer', 'Autumn', 'Winter'], answer: 1 },
+    { id: 'r3q2', text: 'Who cooked the meat?', options: ['Tom', 'Nikki', 'Claire', 'Patrick'], answer: 3 },
+    { id: 'r3q3', text: 'Where was the party?', options: ['In a flat', 'In an office', 'In a garden', 'In a restaurant'], answer: 2 },
+    { id: 'r3q4', text: 'Which present did Helen get?', options: ['Something to wear around her neck', 'Something to wear on her hands', 'Something to wear on her head', 'Something to wear on her feet'], answer: 2 },
+    { id: 'r3q5', text: 'Where is Helen going in the evening?', options: ['To a restaurant', 'To Peter’s house', 'To a swimming pool', 'To her mother’s house'], answer: 0 },
+    { id: 'r3q6', text: 'What will Helen’s mother like?', options: ['Helen’s shoes', 'Helen’s clothes', 'Helen’s jewelry', 'Helen’s handbag'], answer: 2 },
+    { id: 'r3q7', text: 'Why did Helen mention Peter in the email?', options: ['To thank him for a pair of sunglasses', 'To ask him to bring her sunglasses to the office', 'To remind him to bring something to her house', 'To tell him he left something at the party'], answer: 3 },
+    { id: 'r3q8', text: 'Who is Peter?', options: ['Helen’s brother', 'Helen’s husband', 'Helen’s colleague', 'Helen’s boyfriend'], answer: 2 },
+    { id: 'r3q9', text: 'Which day was the party?', options: ['Friday', 'Saturday', 'Sunday', 'Monday'], answer: 1 },
+    { id: 'r3q10', text: 'What is Helen’s email mainly about?', options: ['Thanking people for going to her party', 'Thanking people for helping her', 'Thanking people for visiting her', 'Thanking people for a special present'], answer: 0 }
+  ]
+},
 
   // ===================================================================
   // LISTENING — 25 minutes, 3 tasks.
@@ -172,68 +166,64 @@ Daniela`
   //   audio/listening-2.mp3
   //   audio/listening-3.mp3
   // (or change the paths below to match whatever you name them).
-  //
-  // The speaker lines below are your own recorded transcript. The
-  // multiple-choice options are original — written to fit your audio,
-  // not copied from anywhere — so feel free to edit any of them.
   // ===================================================================
   listening: {
     durationSeconds: 25 * 60,
     tasks: [
-      {
-        id: 'l1',
-        audioUrl: 'audio/listening-1.mp3',
-        instructions: 'You will hear ten speakers. Each speaker will make a statement or ask a question. For each speaker, choose the best option for what comes next. You can play the recording {{TWO}} times.',
-        headerStyle: 'full', // "What is the best response to Speaker N?"
-        questions: [
-          { id: 'l1q1', speaker: 1, line: 'Where are my keys?', options: ['They\'re on the table.', 'I\'ll call you later.', 'It\'s almost five.', 'She\'s not home yet.'], answer: 0 },
-          { id: 'l1q2', speaker: 2, line: 'I\'ve got a cold.', options: ['I hope you feel better soon.', 'That sounds delicious.', 'I\'ll see you at six.', 'Where did you buy it?'], answer: 0 },
-          { id: 'l1q3', speaker: 3, line: 'Can you make lunch today?', options: ['Sure, what would you like?', 'It\'s down the hall.', 'Yes, I\'ll bring my umbrella.', 'No, it\'s too late.'], answer: 0 },
-          { id: 'l1q4', speaker: 4, line: 'She isn\'t here yet.', options: ['Do you know when she\'ll arrive?', 'I already finished it.', 'That\'s a great idea.', 'It was very cold yesterday.'], answer: 0 },
-          { id: 'l1q5', speaker: 5, line: 'What does he do?', options: ['He\'s a teacher.', 'He lives nearby.', 'He left an hour ago.', 'He\'s quite tall.'], answer: 0 },
-          { id: 'l1q6', speaker: 6, line: 'They\'ve just moved house.', options: ['Oh really? Where to?', 'I\'ll pick it up tomorrow.', 'That\'s much too expensive.', 'She studied law.'], answer: 0 },
-          { id: 'l1q7', speaker: 7, line: 'I\'m going to bed.', options: ['Good night, sleep well.', 'What time does it start?', 'I\'ll have the soup.', 'He\'s still at work.'], answer: 0 },
-          { id: 'l1q8', speaker: 8, line: 'Can I borrow a pen?', options: ['Sure, here you go.', 'I lent it to you yesterday.', 'It\'s on sale this week.', 'I prefer tea.'], answer: 0 },
-          { id: 'l1q9', speaker: 9, line: 'Could that be the dog you saw last week?', options: ['Yes, I think it is.', 'I bought it yesterday.', 'We left at noon.', 'It\'s going to rain.'], answer: 0 },
-          { id: 'l1q10', speaker: 10, line: 'How much will it be to send this parcel to the USA?', options: ['That depends on the weight.', 'It arrived this morning.', 'I\'ll wrap it now.', 'He\'s travelling there next month.'], answer: 0 }
-        ]
-      },
-      {
-        id: 'l2',
-        audioUrl: 'audio/listening-2.mp3',
-        instructions: 'You will hear ten speakers. Each speaker will make a statement or ask a question. For each speaker, choose the best option for what comes next. You can play the recording {{TWO}} times.',
-        headerStyle: 'full',
-        questions: [
-          { id: 'l2q1', speaker: 1, line: 'Do you like playing football?', options: ['Yes, I play every weekend.', 'He works downtown.', 'It starts at noon.', 'She prefers tennis.'], answer: 0 },
-          { id: 'l2q2', speaker: 2, line: 'Where do you work?', options: ['I work at a hospital.', 'I leave at eight.', 'She\'s my sister.', 'It was very busy.'], answer: 0 },
-          { id: 'l2q3', speaker: 3, line: 'I have a cold.', options: ['I\'m sorry to hear that.', 'That sounds like fun.', 'I\'ll meet you there.', 'It\'s quite spacious.'], answer: 0 },
-          { id: 'l2q4', speaker: 4, line: 'I try to take a walk every day.', options: ['That\'s a great habit to have.', 'He missed the bus.', 'It\'s on the corner.', 'She bought a new car.'], answer: 0 },
-          { id: 'l2q5', speaker: 5, line: 'Here is my Aunt Emily now.', options: ['It\'s lovely to finally meet you.', 'I\'ll call her tomorrow.', 'He left it at home.', 'That sounds expensive.'], answer: 0 },
-          { id: 'l2q6', speaker: 6, line: 'Why did Michael turn down that job offer?', options: ['He wanted to stay closer to home.', 'He started last Monday.', 'It pays quite well.', 'She recommended him.'], answer: 0 },
-          { id: 'l2q7', speaker: 7, line: 'Can you break down that process so I can understand it better?', options: ['Sure, let me go through it step by step.', 'It happened very quickly.', 'He\'s an excellent cook.', 'We finished it last year.'], answer: 0 },
-          { id: 'l2q8', speaker: 8, line: 'That professor really knows how to get a point across to students.', options: ['Yes, his lectures are always clear.', 'He\'s often late to class.', 'She studies biology.', 'It\'s a difficult subject.'], answer: 0 },
-          { id: 'l2q9', speaker: 9, line: 'Sally let the team down when she skipped the practice.', options: ['I know, everyone was disappointed.', 'She\'s the fastest runner.', 'It starts next week.', 'He coaches the team.'], answer: 0 },
-          { id: 'l2q10', speaker: 10, line: 'If she were here, I know she would advise us to just put up with the delays.', options: ['You\'re probably right, she\'s always so patient.', 'She left two hours ago.', 'It\'s scheduled for next week.', 'He prefers a different approach.'], answer: 0 }
-        ]
-      },
-      {
-        id: 'l3',
-        audioUrl: 'audio/listening-3.mp3',
-        instructions: 'You will hear ten speakers. Each speaker will make a statement or ask a question. For each speaker, choose the best option for what comes next. You can play the recording {{TWO}} times.',
-        headerStyle: 'short', // just "Speaker N"
-        questions: [
-          { id: 'l3q1', speaker: 1, line: 'I finished my book yesterday.', options: ['What did you think of it?', 'I\'ll read it tonight.', 'She\'s in the library.'], answer: 0 },
-          { id: 'l3q2', speaker: 2, line: 'I live in Australia.', options: ['Oh, which city?', 'I visited last year.', 'He\'s moving there soon.'], answer: 0 },
-          { id: 'l3q3', speaker: 3, line: 'Would you like a cup of tea?', options: ['Yes please, that would be lovely.', 'I prefer to walk.', 'She made it herself.'], answer: 0 },
-          { id: 'l3q4', speaker: 4, line: 'This is my new Irish wool sweater.', options: ['It looks really warm.', 'I bought mine in town.', 'He doesn\'t like wool.'], answer: 0 },
-          { id: 'l3q5', speaker: 5, line: 'What time is it?', options: ['It\'s almost noon.', 'It\'s down the street.', 'I\'ll be there soon.'], answer: 0 },
-          { id: 'l3q6', speaker: 6, line: 'I\'m going to play pool.', options: ['Have fun, who are you playing with?', 'I\'ll bring snacks.', 'She finished her homework.'], answer: 0 },
-          { id: 'l3q7', speaker: 7, line: 'This class is not very interesting.', options: ['I know, I can barely stay awake.', 'It starts at nine.', 'He teaches three classes.'], answer: 0 },
-          { id: 'l3q8', speaker: 8, line: 'Shall we buy some jewellery for Mum?', options: ['That\'s a lovely idea.', 'She prefers flowers instead.', 'He already bought a gift.'], answer: 0 },
-          { id: 'l3q9', speaker: 9, line: 'I am so happy that I\'m finally here.', options: ['Welcome, we\'ve been looking forward to this.', 'It took a long time to arrive.', 'She left early this morning.'], answer: 0 },
-          { id: 'l3q10', speaker: 10, line: 'Who looks after the children?', options: ['Their grandmother does, most days.', 'They go to school nearby.', 'He works from home.'], answer: 0 }
-        ]
-      }
+{
+  id: 'l1',
+  audioUrl: 'audio/listening-1.mp3',
+  instructions: 'You will hear ten speakers. Each speaker will make a statement or ask a question. For each speaker, choose the best option for what comes next. You can play the recording {{TWO}} times.',
+  headerStyle: 'full', // "What is the best response to Speaker N?"
+  questions: [
+    { id: 'l1q1', speaker: 1, line: 'Where are my keys?', options: ['I can’t open the door.', 'I’ll fix them.', 'Here is the lock.', 'They’re in the kitchen.'], answer: 3 },
+    { id: 'l1q2', speaker: 2, line: 'I\'ve got a cold.', options: ['I hope you feel better soon.', 'I’d love a glass of water.', 'Why don’t you put on a jumper?', 'Has the temperature changed?'], answer: 0 },
+    { id: 'l1q3', speaker: 3, line: 'Can you make lunch today?', options: ['I’ll have a sandwich, thanks.', 'Yes, what would you like?', 'No, not yet.', 'Will you be coming home later?'], answer: 1 },
+    { id: 'l1q4', speaker: 4, line: 'She isn\'t here yet.', options: ['She decided to take the train.', 'By the clock tower.', 'I’ll see her tomorrow.', 'She said she would be here in five minutes.'], answer: 3 },
+    { id: 'l1q5', speaker: 5, line: 'What does he do?', options: ['He dropped his phone.', 'He lives in Manchester.', 'He’s an architect.', 'He studied engineering.'], answer: 2 },
+    { id: 'l1q6', speaker: 6, line: 'They\'ve just moved house.', options: ['Where to?', 'Do you need some help?', 'Here’s my address.', 'They’ve lived there for 10 years.'], answer: 0 },
+    { id: 'l1q7', speaker: 7, line: 'I\'m going to bed.', options: ['Did the alarm go off?', 'Where is it?', 'Good night.', 'You looked tired yesterday.'], answer: 2 },
+    { id: 'l1q8', speaker: 8, line: 'Can I borrow a pen?', options: ['I prefer to type my notes.', 'Yes, here you are.', 'This pen was on sale.', 'I lent it to you.'], answer: 1 },
+    { id: 'l1q9', speaker: 9, line: 'Could that be the dog you saw last week?', options: ['I prefer small dogs if they don’t bark too much.', 'I remembered that dog after you pointed her out.', 'I thought we were in a different part of the park.', 'I don’t think so because it is so much bigger.'], answer: 3 },
+    { id: 'l1q10', speaker: 10, line: 'How much will it be to send this parcel to the USA?', options: ['It depends on how soon you want it to get there.', 'It will take a minimum of two weeks.', 'If it weighs more than 2 kilos you must sign here.', 'The box will have to be securely taped.'], answer: 0 }
+  ]
+},
+{
+  id: 'l2',
+  audioUrl: 'audio/listening-2.mp3',
+  instructions: 'You will hear ten speakers. Each speaker will make a statement or ask a question. For each speaker, choose the best option for what comes next. You can play the recording {{TWO}} times.',
+  headerStyle: 'full',
+  questions: [
+    { id: 'l2q1', speaker: 1, line: 'Do you like playing football?', options: ['I go to school every day.', 'Yes, he does.', 'No, I think golf is better.', 'No, she prefers swimming.'], answer: 2 },
+    { id: 'l2q2', speaker: 2, line: 'Where do you work?', options: ['I\'m an engineer.', 'I travel in the summer.', 'I studied finance.', 'I commute to the city.'], answer: 0 },
+    { id: 'l2q3', speaker: 3, line: 'I have a cold.', options: ['Do you want a jacket?', 'Would you like to go to the park?', 'Do you want to visit a doctor?', 'Didn’t you know it was cold outside?'], answer: 2 },
+    { id: 'l2q4', speaker: 4, line: 'I try to take a walk every day.', options: ['Do you avoid the bus?', 'Are you near a train station?', 'How often do you do it?', 'How long does it take?'], answer: 3 },
+    { id: 'l2q5', speaker: 5, line: 'Here is my Aunt Emily now.', options: ['Is she your dad\'s sister?', 'Where is your uncle?', 'She and I are sisters.', 'I haven’t seen my niece for a long time.'], answer: 0 },
+    { id: 'l2q6', speaker: 6, line: 'Why did Michael turn down that job offer?', options: ['He wanted to make more money.', 'He preferred a different plan.', 'He was tired of studying.', 'He went there last year.'], answer: 0 },
+    { id: 'l2q7', speaker: 7, line: 'Can you break down that process so I can understand it better?', options: ['It has often been presented.', 'It would take very little work.', 'There are basically five critical steps.', 'There is no point in going further.'], answer: 2 },
+    { id: 'l2q8', speaker: 8, line: 'That professor really knows how to get a point across to students.', options: ['Where did you study before?', 'Can you give me an example?', 'Do you think the students work hard enough?', 'Does he teach more than one class?'], answer: 1 },
+    { id: 'l2q9', speaker: 9, line: 'Sally let the team down when she skipped the practice.', options: ['They won that game.', 'There was nothing the coach could do.', 'Was the practice longer than usual?', 'Didn’t they know she was sick?'], answer: 3 },
+    { id: 'l2q10', speaker: 10, line: 'If she were here, I know she would advise us to just put up with the delays.', options: ['She often wanted to beat the deadlines.', 'She was always in favor of a patient approach.', 'She was the one who said we should set something up.', 'She tore up more than one contract over timing.'], answer: 1 }
+  ]
+},
+{
+  id: 'l3',
+  audioUrl: 'audio/listening-3.mp3',
+  instructions: 'You will hear ten speakers. Each speaker will make a statement or ask a question. For each speaker, choose the best option for what comes next. You can play the recording {{TWO}} times.',
+  headerStyle: 'short', // just "Speaker N"
+  questions: [
+    { id: 'l3q1', speaker: 1, line: 'I finished my book yesterday.', options: ['What class did you go to?', 'Can you do your homework?', 'Was it good?'], answer: 2 },
+    { id: 'l3q2', speaker: 2, line: 'I live in Australia.', options: ['My wife is also Austrian.', 'I went there on holiday.', 'When do you move there?'], answer: 1 },
+    { id: 'l3q3', speaker: 3, line: 'Would you like a cup of tea?', options: ['Yes please, with milk.', 'I’m going to a café.', 'I prefer to have lunch later.'], answer: 0 },
+    { id: 'l3q4', speaker: 4, line: 'This is my new Irish wool sweater.', options: ['That’ll be £15, please.', 'It is really lovely.', 'That’s great for summer.'], answer: 1 },
+    { id: 'l3q5', speaker: 5, line: 'What time is it?', options: ['It’s half past nine.', 'It’s ten degrees.', 'It’s the number eleven.'], answer: 0 },
+    { id: 'l3q6', speaker: 6, line: 'I\'m going to play pool.', options: ['Can you swim?', 'I like the rides.', 'When are you going?'], answer: 2 },
+    { id: 'l3q7', speaker: 7, line: 'This class is not very interesting.', options: ['Yes, I’m so boring.', 'Yes, I hope it finishes soon.', 'Yes, I’m learning a lot.'], answer: 1 },
+    { id: 'l3q8', speaker: 8, line: 'Shall we buy some jewellery for Mum?', options: ['I saw a lovely necklace yesterday.', 'These are too big for her.', 'She won’t like the color.'], answer: 0 },
+    { id: 'l3q9', speaker: 9, line: 'I am so happy that I\'m finally here.', options: ['Yes, it was a long journey.', 'Yes, it was a really fast trip.', 'Yes, it has finally arrived.'], answer: 0 },
+    { id: 'l3q10', speaker: 10, line: 'Who looks after the children?', options: ['They look like their father.', 'I saw them yesterday.', 'My mother does.'], answer: 2 }
+  ]
+}
     ]
   },
 
