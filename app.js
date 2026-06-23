@@ -59,8 +59,13 @@ function formatTime(totalSeconds) {
 
 function showScreen(id) {
   document.querySelectorAll('audio, video').forEach(el => { try { el.pause(); } catch (e) {} });
+  const target = document.getElementById(id);
+  if (!target) {
+    console.error(`showScreen: no element with id="${id}" found in index.html. Is index.html up to date with app.js?`);
+    return;
+  }
   document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+  target.classList.add('active');
   document.getElementById('topbar').classList.remove('visible');
 }
 
@@ -241,6 +246,7 @@ document.getElementById('registerForm').addEventListener('submit', (e) => {
     gender: document.getElementById('fGender').value
   };
   showScreen('screen-welcome');
+  playWelcomeVideoAutoplay();
 });
 
 // ---------------------------------------------------------------------
@@ -250,26 +256,40 @@ document.getElementById('btnWelcomeNext').addEventListener('click', () => {
   showScreen('screen-audio');
 });
 
-// Welcome screen intro video (video0-0) — tap to play, not autoplay.
-// The play button overlay hides itself once clicked; the native video
-// just plays inline below the icons.
+// Welcome screen intro video (video0-0) — autoplays as soon as the
+// Welcome screen is shown (right after registration submits, which is
+// itself a user gesture, so unmuted autoplay is attempted first). If
+// the browser still blocks it, falls back to muted with a replay
+// button the student can tap to hear it with sound.
 const welcomeVideo = document.getElementById('welcomeVideo');
 const btnWelcomeVideoPlay = document.getElementById('btnWelcomeVideoPlay');
 if (welcomeVideo && TEST_DATA.welcomeVideo) {
   welcomeVideo.src = TEST_DATA.welcomeVideo.videoUrl;
 }
 if (btnWelcomeVideoPlay) {
+  btnWelcomeVideoPlay.style.display = 'none';
   btnWelcomeVideoPlay.addEventListener('click', () => {
     btnWelcomeVideoPlay.style.display = 'none';
     welcomeVideo.muted = false;
+    welcomeVideo.currentTime = 0;
     welcomeVideo.play().catch(() => {
-      // Even a direct click can occasionally be rejected (e.g. file
-      // missing) — bring the button back so the student can retry.
       btnWelcomeVideoPlay.style.display = 'flex';
     });
   });
   welcomeVideo.addEventListener('ended', () => {
     btnWelcomeVideoPlay.style.display = 'flex';
+  });
+}
+
+function playWelcomeVideoAutoplay() {
+  if (!welcomeVideo || !TEST_DATA.welcomeVideo) return;
+  welcomeVideo.muted = false;
+  welcomeVideo.currentTime = 0;
+  welcomeVideo.play().catch(() => {
+    welcomeVideo.muted = true;
+    welcomeVideo.play().catch(() => {
+      if (btnWelcomeVideoPlay) btnWelcomeVideoPlay.style.display = 'flex';
+    });
   });
 }
 
@@ -701,6 +721,7 @@ function showPartIntroVideo(videoUrl, onContinue) {
   const btn = document.getElementById('btnPartIntroNext');
 
   errorEl.style.display = 'none';
+  video.style.display = 'block';
   video.src = videoUrl;
   video.muted = false;
 
@@ -852,7 +873,8 @@ function startSpeakingSequence(index) {
 }
 
 function startCountdown(task) {
-  document.getElementById('speakingStatus').textContent = 'Запись начнётся через:';
+  document.getElementById('speakingStatus').textContent =
+    task.part === 2 ? 'Начинаем подготовку через:' : 'Запись начнётся через:';
   let remaining = 5;
   document.getElementById('speakingTimer').textContent = String(remaining);
 
