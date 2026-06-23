@@ -4,14 +4,6 @@
  * Receives one Speaking answer's recorded audio (as base64) from the
  * browser and stores it in Supabase Storage, in the SAME Supabase
  * project already used for Royal Herald — just a new bucket.
- *
- * Required environment variables (set in Netlify, never in the code):
- *   SUPABASE_URL          — e.g. https://gbumrehhicixybuugxcd.supabase.co
- *   SUPABASE_SERVICE_KEY  — the *service role* key (Project Settings →
- *                            API → service_role), NOT the public anon key.
- *                            This key can write to storage, so it must
- *                            only ever live server-side.
- *
  * Expects the bucket below to already exist and be set to Public.
  * -----------------------------------------------------------------------
  */
