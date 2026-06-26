@@ -30,7 +30,10 @@ const state = {
   breakHandle: null,
 
   studentInfo: null,
-  speakingRecordings: [],  // [{ questionId, part, topic, prompt, blob }]
+  sessionId: null,         // generated once at registration; stable for the whole test
+  finalReportSent: false,  // guards against double-emailing once the real completion report goes out
+  speakingRecordings: [],  // [{ questionId, part, topic, prompt, blob }] — raw, in-memory only
+  uploadedSpeaking: [],    // [{ part, topic, prompt, audioUrl }] — already uploaded to Supabase, safe to report at any time
   reportStatus: 'idle',    // 'idle' | 'sending' | 'sent' | 'error'
 
   speakingIndex: 0,
@@ -266,6 +269,7 @@ document.getElementById('registerForm').addEventListener('submit', (e) => {
     city: document.getElementById('fCity').value.trim(),
     gender: document.getElementById('fGender').value
   };
+  state.sessionId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   showScreen('screen-audio');
   armUnloadGuard();
 });
@@ -547,6 +551,7 @@ document.getElementById('btnModalNext').addEventListener('click', () => {
 function finishReadingSection() {
   clearInterval(state.readingTimerHandle);
   if (state.readingDotObserver) state.readingDotObserver.disconnect();
+  sendPartialReport();
   showSectionComplete(1, 'Аудирование', () => showScreen('screen-listening-intro'));
 }
 
@@ -679,6 +684,7 @@ function doAdvanceListeningTask() {
 function finishListeningSection() {
   clearInterval(state.listeningTimerHandle);
   if (state.listeningDotObserver) state.listeningDotObserver.disconnect();
+  sendPartialReport();
   showSectionComplete(2, 'Говорение', () => showScreen('screen-speaking-intro'));
 }
 
@@ -1099,13 +1105,19 @@ async function startRecordingAuto(task) {
       stream.getTracks().forEach(t => t.stop());
       if (state.audioChunks.length > 0) {
         const blob = new Blob(state.audioChunks, { type: recorder.mimeType || 'audio/webm' });
-        state.speakingRecordings.push({
+        const recording = {
           questionId: task.id,
           part: task.part,
           topic: task.topic,
           prompt: task.prompt,
           blob
-        });
+        };
+        state.speakingRecordings.push(recording);
+        // Upload right away rather than waiting for the whole test to
+        // finish — this way, if the student abandons partway through
+        // Speaking, whatever they already answered is already safely
+        // in Supabase and can still be reported.
+        uploadSpeakingRecording(recording);
       }
     });
     recorder.start();
@@ -1236,50 +1248,73 @@ function blobToBase64(blob) {
   });
 }
 
-// Uploads every recorded answer to Supabase Storage, then sends the full
-// report (student info + Reading/Listening scores + Speaking recording
-// links) to the teacher's email via a Netlify Function. Both endpoints
-// are server-side (netlify/functions/) since they need secret credentials
-// that must never live in the browser.
+// Uploads a single Speaking answer to Supabase Storage right after it's
+// recorded, and adds it to state.uploadedSpeaking. Called immediately
+// from the MediaRecorder 'stop' handler — by the time this runs, the
+// answer is safe even if the student abandons the test a moment later.
+async function uploadSpeakingRecording(rec) {
+  try {
+    const base64 = await blobToBase64(rec.blob);
+    const uploadRes = await fetch('/.netlify/functions/upload-recording', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: state.sessionId,
+        questionId: rec.questionId,
+        mimeType: rec.blob.type || 'audio/webm',
+        audioBase64: base64
+      })
+    });
+    if (!uploadRes.ok) throw new Error(`Upload failed for ${rec.questionId}`);
+    const { url } = await uploadRes.json();
+    state.uploadedSpeaking.push({ part: rec.part, topic: rec.topic, prompt: rec.prompt, audioUrl: url });
+    sendPartialReport();
+  } catch (err) {
+    // Don't block the test flow on an upload hiccup — the recording
+    // stays in state.speakingRecordings either way, and whatever DID
+    // upload successfully is still reportable.
+    console.error('Speaking upload error:', err);
+  }
+}
+
+// Builds the report payload from whatever is available right now —
+// used for the final completion report, milestone partial reports, and
+// the abandonment beacon alike. `status` distinguishes them in the
+// email itself.
+function buildReportPayload(status) {
+  return {
+    status, // 'completed' | 'partial' | 'abandoned'
+    student: state.studentInfo,
+    reading: computeSectionScore('reading'),
+    listening: computeSectionScore('listening'),
+    speaking: state.uploadedSpeaking
+  };
+}
+
+// Sends a report. `keepalive` lets the request survive the page being
+// torn down right after the call (used for milestones fired close to
+// navigation, and is required for the abandonment path). Returns true
+// on success.
+async function sendReportPayload(payload, { keepalive = false } = {}) {
+  const res = await fetch('/.netlify/functions/send-report', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    keepalive
+  });
+  if (!res.ok) throw new Error('send-report failed');
+}
+
+// The final, normal-completion report — unchanged behavior from the
+// student's point of view, but now reuses recordings that were already
+// uploaded incrementally rather than uploading everything in one go at
+// the end.
 async function submitReport() {
   state.reportStatus = 'sending';
   renderReportStatus();
-
   try {
-    const sessionId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-
-    const speaking = [];
-    for (const rec of state.speakingRecordings) {
-      const base64 = await blobToBase64(rec.blob);
-      const uploadRes = await fetch('/.netlify/functions/upload-recording', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId,
-          questionId: rec.questionId,
-          mimeType: rec.blob.type || 'audio/webm',
-          audioBase64: base64
-        })
-      });
-      if (!uploadRes.ok) throw new Error(`Upload failed for ${rec.questionId}`);
-      const { url } = await uploadRes.json();
-      speaking.push({ part: rec.part, topic: rec.topic, prompt: rec.prompt, audioUrl: url });
-    }
-
-    const payload = {
-      student: state.studentInfo,
-      reading: computeSectionScore('reading'),
-      listening: computeSectionScore('listening'),
-      speaking
-    };
-
-    const sendRes = await fetch('/.netlify/functions/send-report', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    if (!sendRes.ok) throw new Error('send-report failed');
-
+    await sendReportPayload(buildReportPayload('completed'));
+    state.finalReportSent = true;
     state.reportStatus = 'sent';
   } catch (err) {
     console.error('Report submission error:', err);
@@ -1287,6 +1322,47 @@ async function submitReport() {
   }
   renderReportStatus();
 }
+
+// Milestone partial report — fired silently after Reading finishes,
+// after Listening finishes, and after each Speaking answer uploads.
+// Not shown to the student and never blocks the test flow; if it fails,
+// the test just continues (the final report, or an abandonment beacon,
+// will still carry whatever's available).
+async function sendPartialReport() {
+  if (state.finalReportSent) return; // test already completed normally — no need for more partial sends
+  try {
+    await sendReportPayload(buildReportPayload('partial'));
+  } catch (err) {
+    console.error('Partial report error:', err);
+  }
+}
+
+// Abandonment path: fired when the tab is closed/reloaded/navigated
+// away from mid-test. A normal fetch() can be aborted mid-flight when
+// the page unloads, so this uses sendBeacon — built specifically to
+// reliably deliver a small payload during page teardown. Falls back to
+// a keepalive fetch if sendBeacon isn't available.
+function sendAbandonmentReport() {
+  if (state.finalReportSent) return; // already completed normally
+  if (!state.studentInfo) return;    // never even registered — nothing to report
+  // Nothing answered anywhere yet — registering alone isn't worth a report.
+  const hasAnyProgress = Object.keys(state.readingAnswers).length > 0
+    || Object.keys(state.listeningAnswers).length > 0
+    || state.uploadedSpeaking.length > 0;
+  if (!hasAnyProgress) return;
+
+  const payload = buildReportPayload('abandoned');
+  const body = JSON.stringify(payload);
+
+  if (navigator.sendBeacon) {
+    const blob = new Blob([body], { type: 'application/json' });
+    navigator.sendBeacon('/.netlify/functions/send-report', blob);
+  } else {
+    sendReportPayload(payload, { keepalive: true }).catch(() => {});
+  }
+}
+
+window.addEventListener('pagehide', sendAbandonmentReport);
 
 function renderReportStatus() {
   const el = document.getElementById('reportStatus');
