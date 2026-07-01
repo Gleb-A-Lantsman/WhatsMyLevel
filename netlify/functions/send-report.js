@@ -65,6 +65,137 @@ function renderBreakdownTable(breakdown) {
     </table>`;
 }
 
+// Maps a percentage score to a CEFR-style band, using the same
+// percentage thresholds as most standardised English tests.
+function percentToCefr(pct) {
+  if (pct === null || pct === undefined) return { band: '—', label: 'нет данных', color: '#9aa5b1' };
+  if (pct < 20) return { band: 'A0',  label: 'Novice (ниже A1)',     color: '#9aa5b1' };
+  if (pct < 35) return { band: 'A1',  label: 'Beginner',             color: '#e07b39' };
+  if (pct < 50) return { band: 'A2',  label: 'Elementary',           color: '#e0a839' };
+  if (pct < 63) return { band: 'B1',  label: 'Intermediate',         color: '#5aab61' };
+  if (pct < 77) return { band: 'B2',  label: 'Upper Intermediate',   color: '#2d9cdb' };
+  if (pct < 90) return { band: 'C1',  label: 'Advanced',             color: '#6c63ff' };
+                return { band: 'C2',  label: 'Proficient',           color: '#1f2933' };
+}
+
+function renderScoreCircle(score, total, cefr) {
+  const pct = total ? Math.round((score / total) * 100) : 0;
+  const radius = 28, circ = Math.round(2 * Math.PI * radius);
+  const filled = Math.round((pct / 100) * circ);
+  return `
+    <td style="padding:12px 20px;vertical-align:middle;width:50%;">
+      <table style="border-collapse:collapse;">
+        <tr>
+          <td style="padding-right:14px;">
+            <svg width="72" height="72" viewBox="0 0 72 72">
+              <circle cx="36" cy="36" r="${radius}" fill="none" stroke="#e3e8ef" stroke-width="7"/>
+              <circle cx="36" cy="36" r="${radius}" fill="none" stroke="${cefr.color}" stroke-width="7"
+                stroke-dasharray="${filled} ${circ - filled}"
+                stroke-dashoffset="${Math.round(circ * 0.25)}"
+                stroke-linecap="round"/>
+              <text x="36" y="40" text-anchor="middle" font-size="14" font-weight="700"
+                font-family="Arial,sans-serif" fill="${cefr.color}">${score}</text>
+            </svg>
+          </td>
+          <td style="vertical-align:middle;">
+            <div style="font-size:11px;color:#5b6472;margin-bottom:2px;">из ${total} (${pct}%)</div>
+            <div style="font-size:17px;font-weight:800;color:${cefr.color};">${cefr.band}</div>
+            <div style="font-size:12px;color:#5b6472;">${cefr.label}</div>
+          </td>
+        </tr>
+      </table>
+    </td>`;
+}
+
+function renderCefrScaleRow(activeBand) {
+  const bands = [
+    {range:'0–19%', band:'A0'}, {range:'20–34%', band:'A1'}, {range:'35–49%', band:'A2'},
+    {range:'50–62%', band:'B1'}, {range:'63–76%', band:'B2'}, {range:'77–89%', band:'C1'}, {range:'90–100%', band:'C2'}
+  ];
+  const cells = bands.map(b => {
+    const active = b.band === activeBand;
+    return `<td style="border:1px solid #e3e8ef;padding:6px 8px;text-align:center;font-size:11px;background:${active ? '#2563eb' : '#f3f6fa'};color:${active ? '#fff' : '#5b6472'};font-weight:${active ? 700 : 400};">
+      ${b.band}<br><span style="font-size:10px;">${b.range}</span>
+    </td>`;
+  }).join('');
+  return `<table style="border-collapse:collapse;width:100%;margin-bottom:8px;"><tr>${cells}</tr></table>`;
+}
+
+function renderAssessmentTemplate(reading, listening, speaking) {
+  const rPct  = reading  && reading.total  ? reading.percent  : null;
+  const lPct  = listening && listening.total ? listening.percent : null;
+  const avgPct = (rPct !== null && lPct !== null) ? Math.round((rPct + lPct) / 2) : (rPct ?? lPct);
+  const rCefr  = percentToCefr(rPct);
+  const lCefr  = percentToCefr(lPct);
+  const oCefr  = percentToCefr(avgPct);
+  const speakingCount = (speaking || []).length;
+
+  return `
+    <div style="margin-top:32px;border-top:2px solid #e3e8ef;padding-top:24px;">
+      <h2 style="margin:0 0 4px;font-size:18px;">🎓 Предварительная оценка уровня</h2>
+      <p style="color:#5b6472;font-size:13px;margin:0 0 20px;">Заполняется преподавателем RE-Academy после проверки всех разделов.</p>
+
+      <!-- Overall band -->
+      <div style="background:#f3f6fa;border-radius:10px;padding:16px 20px;margin-bottom:20px;text-align:center;">
+        <div style="font-size:12px;color:#5b6472;margin-bottom:4px;">Общий уровень (Чтение + Аудирование)</div>
+        <div style="font-size:32px;font-weight:900;color:${oCefr.color};">${oCefr.band}</div>
+        <div style="font-size:13px;color:#5b6472;">${oCefr.label}</div>
+        ${renderCefrScaleRow(oCefr.band)}
+      </div>
+
+      <!-- Per-section scores -->
+      <table style="border-collapse:collapse;width:100%;margin-bottom:20px;">
+        <tr>
+          ${renderScoreCircle(reading ? reading.correct : 0, reading ? reading.total : 30, rCefr)}
+          <td style="width:10px;"></td>
+          ${renderScoreCircle(listening ? listening.correct : 0, listening ? listening.total : 30, lCefr)}
+        </tr>
+        <tr>
+          <td style="padding:2px 20px 14px;font-size:12px;color:#5b6472;font-weight:700;">📖 ЧТЕНИЕ</td>
+          <td></td>
+          <td style="padding:2px 20px 14px;font-size:12px;color:#5b6472;font-weight:700;">🎧 АУДИРОВАНИЕ</td>
+        </tr>
+      </table>
+
+      <!-- Speaking section -->
+      <div style="border:1px solid #e3e8ef;border-radius:8px;padding:14px 18px;margin-bottom:14px;">
+        <div style="font-size:13px;font-weight:700;margin-bottom:6px;">🎤 ГОВОРЕНИЕ</div>
+        <div style="font-size:12px;color:#5b6472;margin-bottom:8px;">Записей получено: ${speakingCount} из 15</div>
+        <div style="font-size:12px;color:#5b6472;">Оценка преподавателя:</div>
+        <div style="border:1px dashed #b6c8e8;border-radius:6px;padding:10px 14px;min-height:60px;margin-top:6px;color:#9aa5b1;font-size:13px;font-style:italic;">
+          [ Заполнить после прослушивания ответов ]
+        </div>
+        <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;">
+          ${['A1','A2','B1','B2','C1','C2'].map(b => `<span style="border:1px solid #e3e8ef;border-radius:4px;padding:3px 10px;font-size:12px;color:#5b6472;">☐ ${b}</span>`).join('')}
+        </div>
+      </div>
+
+      <!-- Writing section (manual) -->
+      <div style="border:1px solid #e3e8ef;border-radius:8px;padding:14px 18px;margin-bottom:14px;">
+        <div style="font-size:13px;font-weight:700;margin-bottom:6px;">✍️ ПИСЬМО</div>
+        <div style="font-size:12px;color:#5b6472;margin-bottom:8px;">Проверяется вручную преподавателем.</div>
+        <div style="border:1px dashed #b6c8e8;border-radius:6px;padding:10px 14px;min-height:60px;margin-top:6px;color:#9aa5b1;font-size:13px;font-style:italic;">
+          [ Заполнить после проверки письменного задания ]
+        </div>
+        <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;">
+          ${['A1','A2','B1','B2','C1','C2'].map(b => `<span style="border:1px solid #e3e8ef;border-radius:4px;padding:3px 10px;font-size:12px;color:#5b6472;">☐ ${b}</span>`).join('')}
+        </div>
+      </div>
+
+      <!-- Final verdict -->
+      <div style="border:1px solid #e3e8ef;border-radius:8px;padding:14px 18px;">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px;">📋 Итоговый вывод преподавателя</div>
+        <div style="border:1px dashed #b6c8e8;border-radius:6px;padding:10px 14px;min-height:80px;color:#9aa5b1;font-size:13px;font-style:italic;">
+          [ Общий уровень: __ / Рекомендуемая программа: __ / Примечания: __ ]
+        </div>
+      </div>
+
+      <p style="font-size:11px;color:#9aa5b1;margin-top:16px;">
+        © 2014–2026 RE-Academy · Этот отчёт сгенерирован автоматически системой WhatsMyLevel.
+      </p>
+    </div>`;
+}
+
 function renderSpeakingTable(speaking) {
   if (!speaking || speaking.length === 0) {
     return '<p style="color:#5b6472;font-size:13px;">Раздел «Говорение» ещё не начат или ни один ответ не был записан.</p>';
@@ -154,6 +285,8 @@ exports.handler = async (event) => {
 
         <h3>Говорение</h3>
         ${renderSpeakingTable(speaking)}
+
+        ${safeStatus === 'completed' ? renderAssessmentTemplate(reading, listening, speaking) : ''}
       </div>`;
 
     const transporter = nodemailer.createTransport({
