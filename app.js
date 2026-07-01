@@ -46,6 +46,7 @@ const state = {
 
   shownPartIntros: {},     // { 1: true, 2: true, 3: true } — each Part's intro video plays once
   partIntroContinueFn: null, // what "К вопросам!" should do next
+  speakingPartialHandle: null, // setTimeout handle for the delayed Speaking partial report
 
   pendingForceAdvance: false
 };
@@ -147,6 +148,7 @@ function expireTest() {
     try { state.mediaRecorder.stop(); } catch (e) {}
   }
   if (state.micStream) state.micStream.getTracks().forEach(t => t.stop());
+  clearTimeout(state.speakingPartialHandle);
   disarmUnloadGuard();
   showScreen('screen-test-expired');
 }
@@ -772,7 +774,10 @@ function showPartIntroVideo(part, videoUrl, onContinue) {
 document.getElementById('btnSpeakingStart').addEventListener('click', () => {
   state.speakingIndex = 0;
   state.speakingRecordings = [];
+  state.uploadedSpeaking = [];
   state.shownPartIntros = {};
+  clearTimeout(state.speakingPartialHandle);
+  state.speakingPartialHandle = null;
   showScreen('screen-mic-check');
   resetMicCheckScreen();
 });
@@ -863,6 +868,18 @@ document.getElementById('btnMicYes').addEventListener('click', () => {
 function goToSpeakingTask(index) {
   const task = TEST_DATA.speaking.tasks[index];
   const intro = TEST_DATA.speakingIntros && TEST_DATA.speakingIntros[task.part];
+
+  // Schedule a single delayed partial report 25 minutes after Speaking
+  // starts. This fires only once (guarded by the handle), and only if
+  // the final completion report hasn't already been sent. It captures
+  // all speaking recordings uploaded so far — typically several Part 1
+  // answers and the start of Part 2 — giving the teacher a usable
+  // snapshot in case the student abandons late in the test.
+  if (index === 0 && !state.speakingPartialHandle) {
+    state.speakingPartialHandle = setTimeout(() => {
+      sendPartialReport();
+    }, 25 * 60 * 1000);
+  }
 
   if (intro && !state.shownPartIntros[task.part]) {
     state.shownPartIntros[task.part] = true;
@@ -1268,7 +1285,9 @@ async function uploadSpeakingRecording(rec) {
     if (!uploadRes.ok) throw new Error(`Upload failed for ${rec.questionId}`);
     const { url } = await uploadRes.json();
     state.uploadedSpeaking.push({ part: rec.part, topic: rec.topic, prompt: rec.prompt, audioUrl: url });
-    sendPartialReport();
+    // Do NOT call sendPartialReport() here — that would fire an email after
+    // every single question (15+ emails per student). Instead a single
+    // delayed partial send is scheduled when Speaking starts (see goToSpeakingTask).
   } catch (err) {
     // Don't block the test flow on an upload hiccup — the recording
     // stays in state.speakingRecordings either way, and whatever DID
@@ -1314,6 +1333,7 @@ async function submitReport() {
   renderReportStatus();
   try {
     await sendReportPayload(buildReportPayload('completed'));
+    clearTimeout(state.speakingPartialHandle);
     state.finalReportSent = true;
     state.reportStatus = 'sent';
   } catch (err) {
