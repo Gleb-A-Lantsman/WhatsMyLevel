@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speaking Notes — RE-Academy</title>
+<style>
+  :root {
+    --navy: #1c2b4a;
+    --navy-soft: #2e4370;
+    --gold: #c9a227;
+    --gold-soft: #e6d38f;
+    --beige: #f5f0e6;
+    --paper: #fffdf8;
+    --line: #d8cfc0;
+    --neg: #8a2f2f;
+    --pos: #2f6b3a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Georgia, 'Palatino Linotype', Palatino, serif;
+    background: var(--beige);
+    color: var(--navy);
+  }
+  header {
+    background: var(--navy);
+    color: var(--beige);
+    padding: 18px 24px 14px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  header h1 { margin: 0; font-size: 1.4em; font-weight: normal; letter-spacing: 0.04em; }
+  header h1 .crest { color: var(--gold); }
+  .version { font-size: 0.75em; color: var(--gold-soft); font-style: italic; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 20px 16px 60px; }
+
+  /* Shared top block */
+  .shared-block {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 18px;
+  }
+  .shared-block label { font-size: 0.85em; letter-spacing: 0.05em; text-transform: uppercase; color: var(--navy-soft); display: block; margin-bottom: 4px; }
+  #studentName {
+    font-family: inherit; font-size: 1.05em; width: 100%;
+    border: none; border-bottom: 1px solid var(--line);
+    padding: 6px 2px; background: transparent; color: var(--navy);
+    margin-bottom: 14px;
+  }
+  .meta-grid {
+    display: grid; grid-template-columns: 1.4fr 1.2fr 1fr 0.9fr 0.9fr;
+    gap: 10px; margin-bottom: 14px;
+  }
+  .meta-grid input {
+    font-family: inherit; font-size: 0.92em; width: 100%;
+    border: 1px solid var(--line); border-radius: 4px; padding: 6px; background: #fff; color: var(--navy);
+  }
+  .mini-score { display: flex; align-items: center; gap: 4px; }
+  .mini-score input { width: 52px; text-align: center; }
+  .mini-score .slash { color: var(--navy-soft); }
+  #prefillMsg { font-size: 0.85em; color: var(--pos); font-style: italic; margin: -6px 0 12px; min-height: 0; }
+  #generalNotes {
+    font-family: inherit; font-size: 1em; width: 100%; min-height: 64px;
+    border: 1px solid var(--line); border-radius: 4px; padding: 8px;
+    background: #fff; color: var(--navy); resize: vertical;
+  }
+  #studentName:focus, #generalNotes:focus, textarea:focus, input:focus { outline: 2px solid var(--gold-soft); outline-offset: 1px; }
+
+  /* Toggle */
+  .toggle {
+    display: flex; justify-content: center; margin: 0 0 20px; gap: 0;
+  }
+  .toggle button {
+    font-family: inherit; font-size: 1em;
+    padding: 9px 22px; cursor: pointer;
+    border: 1px solid var(--navy); background: var(--paper); color: var(--navy);
+  }
+  .toggle button:first-child { border-radius: 6px 0 0 6px; border-right: none; }
+  .toggle button:last-child { border-radius: 0 6px 6px 0; }
+  .toggle button.active { background: var(--navy); color: var(--gold-soft); }
+
+  /* View 1: questions */
+  .part-heading {
+    font-size: 0.85em; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--navy-soft); border-bottom: 2px solid var(--gold);
+    padding-bottom: 4px; margin: 26px 2px 10px;
+  }
+  .qcard {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 6px;
+    padding: 14px 16px; margin-bottom: 14px;
+  }
+  .qtop { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  .qtext { flex: 1 1 340px; }
+  .qtext .qlabel { font-weight: bold; }
+  .qtext .cue { white-space: pre-line; font-size: 0.95em; margin-top: 6px; color: var(--navy-soft); }
+  .audio-cell { flex: 0 0 240px; }
+  .audio-row { display: flex; gap: 4px; }
+  .playbtn {
+    font-family: inherit; font-size: 0.95em; flex: 1 1 60%;
+    padding: 7px 6px; border-radius: 4px; cursor: pointer;
+    border: 1px solid var(--line); background: #eee; color: #999;
+  }
+  .seekbtn {
+    font-family: inherit; font-size: 0.8em; flex: 0 0 20%;
+    padding: 7px 2px; border-radius: 4px; cursor: pointer;
+    border: 1px solid var(--line); background: #eee; color: #999;
+  }
+  .seekbtn.ready { background: var(--beige); border-color: var(--gold); color: var(--navy); }
+  .seekbtn:disabled { cursor: not-allowed; }
+  .link-row { display: flex; gap: 4px; margin-top: 6px; align-items: stretch; }
+  .binbtn {
+    font-family: inherit; font-size: 0.9em; flex: 0 0 auto;
+    border: 1px solid var(--line); border-radius: 4px; background: var(--paper);
+    cursor: pointer; padding: 0 9px; color: var(--navy-soft);
+  }
+  .binbtn:hover { background: #f0e4e4; border-color: var(--neg); }
+  .criteria-link {
+    align-self: center; margin-left: 14px; font-size: 0.9em;
+    color: var(--navy); text-decoration: underline;
+    text-decoration-color: var(--gold); text-underline-offset: 3px;
+  }
+  .criteria-link:hover { color: var(--navy-soft); }
+  .playbtn.ready { background: var(--gold); border-color: var(--gold); color: var(--navy); font-weight: bold; }
+  .playbtn.playing { background: var(--navy); border-color: var(--navy); color: var(--gold-soft); }
+  .playbtn:disabled { cursor: not-allowed; }
+  .linkfield {
+    font-family: inherit; font-size: 0.8em; flex: 1 1 auto;
+    border: 1px solid var(--line); border-radius: 4px; padding: 6px; background: #fff;
+  }
+  .linkfield:disabled { background: var(--beige); color: #9a917f; border-style: dashed; }
+  .audio-time { font-size: 0.75em; color: var(--navy-soft); margin-top: 4px; text-align: center; min-height: 1em; }
+
+  /* Notes grid */
+  .notes-grid { display: grid; grid-template-columns: 52px 1fr 1fr; gap: 6px 8px; margin-top: 12px; align-items: stretch; }
+  .crit-label {
+    font-size: 0.85em; font-weight: bold; color: var(--navy-soft);
+    display: flex; align-items: center; justify-content: center;
+    background: var(--beige); border-radius: 4px;
+  }
+  .notes-grid textarea {
+    font-family: inherit; font-size: 0.92em; width: 100%; min-height: 40px;
+    border: 1px solid var(--line); border-radius: 4px; padding: 6px; resize: vertical; background: #fff;
+  }
+  .notes-grid textarea.plus { border-left: 4px solid var(--pos); }
+  .notes-grid textarea.minus { border-left: 4px solid var(--neg); }
+  .grid-head { font-size: 0.75em; text-align: center; letter-spacing: 0.08em; text-transform: uppercase; color: var(--navy-soft); }
+
+  /* View 2 */
+  .score-bar {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 6px;
+    padding: 14px 16px; margin-bottom: 18px;
+    display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-end; justify-content: center;
+  }
+  .score-item { text-align: center; }
+  .score-item label { display: block; font-size: 0.75em; letter-spacing: 0.06em; text-transform: uppercase; color: var(--navy-soft); margin-bottom: 4px; }
+  .score-item input {
+    font-family: inherit; font-size: 1.2em; width: 70px; text-align: center;
+    border: 1px solid var(--line); border-radius: 4px; padding: 5px; background: #fff; color: var(--navy);
+  }
+  .overall { border-left: 2px solid var(--gold); padding-left: 18px; }
+  .overall .val { font-size: 1.7em; color: var(--navy); font-weight: bold; min-width: 70px; display: inline-block; }
+  .crit-table { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .crit-col { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; }
+  .crit-col h3 {
+    margin: 0; padding: 10px 12px; font-size: 0.9em; letter-spacing: 0.05em;
+    background: var(--navy); color: var(--gold-soft); font-weight: normal; text-align: center;
+  }
+  .crit-col .pos-list, .crit-col .neg-list { padding: 10px 12px; font-size: 0.92em; }
+  .crit-col .pos-list { flex: 1; }
+  .crit-col ol { margin: 0; padding-left: 18px; }
+  .crit-col li { margin-bottom: 6px; }
+  .crit-col .divider { border-top: 2px solid var(--navy); margin: 0 8px; position: relative; }
+  .crit-col .empty { color: #b0a892; font-style: italic; }
+  .pos-list li::marker { color: var(--pos); }
+  .neg-list li::marker { color: var(--neg); }
+
+  .copy-row { text-align: center; margin: 24px 0 8px; }
+  #copyBtn {
+    font-family: inherit; font-size: 1.05em; padding: 10px 28px; cursor: pointer;
+    background: var(--gold); color: var(--navy); border: none; border-radius: 6px; font-weight: bold;
+    letter-spacing: 0.03em;
+  }
+  #copyBtn:hover { background: #b8921f; }
+  #copyMsg { font-size: 0.85em; color: var(--pos); margin-top: 8px; min-height: 1.2em; }
+
+  /* Generate block */
+  .gen-block {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 6px;
+    padding: 18px 16px; margin-top: 20px; text-align: center;
+  }
+  .gen-missing { font-size: 0.85em; color: var(--navy-soft); font-style: italic; margin-bottom: 12px; min-height: 1.2em; }
+  .gen-missing.ready { color: var(--pos); }
+  #genBtn {
+    font-family: inherit; font-size: 1.1em; padding: 12px 32px; cursor: pointer;
+    background: var(--navy); color: var(--gold-soft); border: none; border-radius: 6px; font-weight: bold;
+    letter-spacing: 0.03em;
+  }
+  #genBtn:hover:not(:disabled) { background: var(--navy-soft); }
+  #genBtn:disabled { background: #cfc8ba; color: #8f8874; cursor: not-allowed; }
+  #genMsg { font-size: 0.85em; color: var(--pos); margin-top: 10px; min-height: 1.2em; }
+  #emailWrap { text-align: left; margin-top: 18px; }
+  #emailWrap h3 { font-size: 1em; letter-spacing: 0.05em; text-transform: uppercase; color: var(--navy-soft); margin: 0 0 8px; }
+  #emailOut {
+    font-family: inherit; font-size: 0.95em; width: 100%;
+    border: 1px solid var(--line); border-radius: 4px; padding: 10px; background: #fff;
+    color: var(--navy); resize: vertical;
+  }
+  #copyEmailBtn {
+    font-family: inherit; font-size: 0.95em; padding: 8px 20px; cursor: pointer; margin-top: 8px;
+    background: var(--gold); color: var(--navy); border: none; border-radius: 6px; font-weight: bold;
+  }
+  #copyEmailBtn:hover { background: #b8921f; }
+  .email-note { font-size: 0.8em; color: var(--navy-soft); font-style: italic; margin-top: 6px; }
+
+  /* Progress */
+  .progress-wrap {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--navy-soft); color: var(--beige);
+    padding: 8px 24px 10px;
+    box-shadow: 0 2px 6px rgba(28,43,74,0.25);
+  }
+  .progress-top { display: flex; justify-content: space-between; align-items: baseline; max-width: 980px; margin: 0 auto; gap: 12px; flex-wrap: wrap; }
+  .progress-count { font-weight: bold; letter-spacing: 0.03em; }
+  .progress-count .big { color: var(--gold-soft); font-size: 1.15em; }
+  .progress-msg { font-style: italic; font-size: 0.9em; color: var(--gold-soft); }
+  .progress-track {
+    max-width: 980px; margin: 6px auto 0; height: 7px;
+    background: rgba(245,240,230,0.25); border-radius: 4px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; width: 0; background: var(--gold);
+    border-radius: 4px; transition: width 0.4s ease;
+  }
+  .qcard.done { border-left: 5px solid var(--gold); }
+  .qcard.done .qlabel::after { content: ' \2713'; color: var(--pos); font-weight: bold; }
+
+  .hidden { display: none; }
+  @media (max-width: 760px) {
+    .crit-table { grid-template-columns: 1fr 1fr; }
+    .meta-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 480px) {
+    .crit-table { grid-template-columns: 1fr; }
+    .audio-cell { flex: 1 1 100%; }
+    .meta-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="crest">&#9819;</span> Speaking Notes</h1>
+  <span class="version">Royal English Academy &middot; v. 24 July 2026</span>
+</header>
+
+<div class="progress-wrap">
+  <div class="progress-top">
+    <span class="progress-count"><span class="big" id="progCount">0</span> / 14 questions graded</span>
+    <span class="progress-msg" id="progMsg"></span>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
+</div>
+
+<div class="wrap">
+
+  <div class="shared-block">
+    <label for="studentName">Student</label>
+    <input type="text" id="studentName" placeholder="Student name&hellip;">
+    <div class="meta-grid">
+      <div><label for="studentEmail">Email</label><input type="text" id="studentEmail" placeholder="student@email&hellip;"></div>
+      <div><label for="studentCity">City / Country</label><input type="text" id="studentCity" placeholder="&#1052;&#1086;&#1089;&#1082;&#1074;&#1072;, &#1056;&#1086;&#1089;&#1089;&#1080;&#1103;"></div>
+      <div><label for="testDate">Test date</label><input type="text" id="testDate"></div>
+      <div><label for="rs">Reading</label><div class="mini-score"><input type="text" id="rs" inputmode="numeric" placeholder="&mdash;"><span class="slash">/</span><input type="text" id="rt" inputmode="numeric" value="30"></div></div>
+      <div><label for="ls">Listening</label><div class="mini-score"><input type="text" id="ls" inputmode="numeric" placeholder="&mdash;"><span class="slash">/</span><input type="text" id="lt" inputmode="numeric" value="30"></div></div>
+    </div>
+    <div id="prefillMsg"></div>
+    <label for="generalNotes">General Comment (goes into the report and the email)</label>
+    <textarea id="generalNotes" placeholder="Overall impression, goals, context&hellip;"></textarea>
+  </div>
+
+  <div class="toggle">
+    <button id="btnView1" class="active">Notes by part</button>
+    <button id="btnView2">Notes by criterion</button>
+    <a class="criteria-link" href="https://takeielts.britishcouncil.org/sites/default/files/ielts_speaking_band_descriptors.pdf" target="_blank" rel="noopener">Speaking Criteria &#8599;</a>
+  </div>
+
+  <!-- ===== VIEW 1 ===== -->
+  <div id="view1"></div>
+
+  <!-- ===== VIEW 2 ===== -->
+  <div id="view2" class="hidden">
+    <div class="score-bar">
+      <div class="score-item"><label>Fluency &amp; Coherence</label><input type="text" id="score-flco" inputmode="decimal"></div>
+      <div class="score-item"><label>Vocabulary</label><input type="text" id="score-voc" inputmode="decimal"></div>
+      <div class="score-item"><label>Grammar</label><input type="text" id="score-gra" inputmode="decimal"></div>
+      <div class="score-item"><label>Pronunciation</label><input type="text" id="score-pr" inputmode="decimal"></div>
+      <div class="score-item overall"><label>Overall</label><span class="val" id="overallScore">&mdash;</span></div>
+    </div>
+    <div class="crit-table" id="critTable"></div>
+    <div class="copy-row">
+      <button id="copyBtn">Copy Results</button>
+      <div id="copyMsg"></div>
+    </div>
+
+    <div class="gen-block">
+      <div class="gen-missing" id="genMissing"></div>
+      <button id="genBtn" disabled>Generate Report and Email</button>
+      <div id="genMsg"></div>
+      <div id="emailWrap" class="hidden">
+        <h3>Suggested email</h3>
+        <textarea id="emailOut" rows="18"></textarea>
+        <button id="copyEmailBtn">Copy email text</button>
+        <div class="email-note">Your General Comment is inserted as written &mdash; adjust the wording if needed before sending.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var CRITERIA = [
+    { key: 'flco', short: 'FlCo', full: 'Fluency & Coherence', copyName: 'Fluency and Coherence', ru: '\u0411\u0435\u0433\u043B\u043E\u0441\u0442\u044C \u0438 \u0441\u0432\u044F\u0437\u043D\u043E\u0441\u0442\u044C \u0440\u0435\u0447\u0438' },
+    { key: 'voc',  short: 'Voc',  full: 'Vocabulary',          copyName: 'Vocabulary',            ru: '\u0421\u043B\u043E\u0432\u0430\u0440\u043D\u044B\u0439 \u0437\u0430\u043F\u0430\u0441' },
+    { key: 'gra',  short: 'Gra',  full: 'Grammar',             copyName: 'Grammar',               ru: '\u0413\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0430: \u0434\u0438\u0430\u043F\u0430\u0437\u043E\u043D \u0438 \u0442\u043E\u0447\u043D\u043E\u0441\u0442\u044C' },
+    { key: 'pr',   short: 'Pr',   full: 'Pronunciation',       copyName: 'Pronunciation',         ru: '\u041F\u0440\u043E\u0438\u0437\u043D\u043E\u0448\u0435\u043D\u0438\u0435' }
+  ];
+
+  var QUESTIONS = [
+    { part: 'Part 1 / Your city', text: 'What city do you live in?' },
+    { part: 'Part 1 / Your city', text: 'What do you like most about your city?' },
+    { part: 'Part 1 / Your city', text: 'Has your city changed much in recent years?' },
+    { part: 'Part 1 / Your city', text: 'Would you like to live in another city in the future?' },
+    { part: 'Part 1 / Weekends', text: 'How do you usually spend your weekends?' },
+    { part: 'Part 1 / Weekends', text: 'Which is your favourite part of the weekend?' },
+    { part: 'Part 1 / Weekends', text: 'Do you think your weekends are long enough?' },
+    { part: 'Part 1 / Weekends', text: 'How important do you think it is to have free time at the weekends?' },
+    { part: 'Part 2 / Someone you know who does something well',
+      text: 'Describe someone you know who does something well.',
+      cue: 'You should say:\n\u2014 who this person is\n\u2014 how you know this person\n\u2014 what they do well\nand explain why you think this person is so good at doing this.\n\nYou will have to talk about the topic for one to two minutes. You have one minute to think about what you are going to say. You can make some notes to help you if you wish.' },
+    { part: 'Part 3 / Skills and abilities', text: 'What skills and abilities do people most want to have today?' },
+    { part: 'Part 3 / Skills and abilities', text: 'Which skills should children learn at school, and which skills at home?' },
+    { part: 'Part 3 / Skills and abilities', text: 'Which skills do you think will be important in the future?' },
+    { part: 'Part 3 / Salaries for skilled people', text: 'Which kinds of jobs have the highest salaries in your country?' },
+    { part: 'Part 3 / Salaries for skilled people', text: 'Are there any other jobs that you think should have high salaries?' }
+  ];
+
+  var audios = {};        // qIndex -> Audio object
+  var qControls = {};     // qIndex -> { startPlay, setLink }
+  var currentPlaying = null;
+  var studentGender = ''; // from test link, if present
+
+  /* ---------- Payload from test link (#d=...) ---------- */
+  var payload = null;
+  (function parsePayload() {
+    var m = location.hash.match(/[#&]d=([^&]+)/);
+    if (!m) return;
+    try {
+      var s = m[1].replace(/-/g, '+').replace(/_/g, '/');
+      while (s.length % 4) s += '=';
+      var bin = atob(s);
+      var bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      payload = JSON.parse(new TextDecoder('utf-8').decode(bytes));
+    } catch (e) { payload = null; }
+  })();
+
+  /* ---------- Build View 1 ---------- */
+  var view1 = document.getElementById('view1');
+  var lastPart = '';
+  QUESTIONS.forEach(function (q, i) {
+    if (q.part !== lastPart) {
+      var h = document.createElement('div');
+      h.className = 'part-heading';
+      h.textContent = q.part;
+      view1.appendChild(h);
+      lastPart = q.part;
+    }
+    var card = document.createElement('div');
+    card.className = 'qcard';
+
+    var top = document.createElement('div');
+    top.className = 'qtop';
+
+    var qt = document.createElement('div');
+    qt.className = 'qtext';
+    var lbl = document.createElement('div');
+    lbl.className = 'qlabel';
+    lbl.textContent = (i + 1) + '. ' + q.text;
+    qt.appendChild(lbl);
+    if (q.cue) {
+      var cue = document.createElement('div');
+      cue.className = 'cue';
+      cue.textContent = q.cue;
+      qt.appendChild(cue);
+    }
+    top.appendChild(qt);
+
+    var ac = document.createElement('div');
+    ac.className = 'audio-cell';
+
+    var audioRow = document.createElement('div');
+    audioRow.className = 'audio-row';
+    var backBtn = document.createElement('button');
+    backBtn.className = 'seekbtn';
+    backBtn.disabled = true;
+    backBtn.textContent = '\u21B6 5s';
+    var btn = document.createElement('button');
+    btn.className = 'playbtn';
+    btn.disabled = true;
+    btn.textContent = '\u25B6 Listen';
+    btn.id = 'play-' + i;
+    var fwdBtn = document.createElement('button');
+    fwdBtn.className = 'seekbtn';
+    fwdBtn.disabled = true;
+    fwdBtn.textContent = '5s \u21B7';
+    audioRow.appendChild(backBtn);
+    audioRow.appendChild(btn);
+    audioRow.appendChild(fwdBtn);
+
+    var linkRow = document.createElement('div');
+    linkRow.className = 'link-row';
+    var link = document.createElement('input');
+    link.type = 'text';
+    link.className = 'linkfield';
+    link.placeholder = 'Paste audio link (webm)\u2026';
+    link.id = 'link-' + i;
+    var binBtn = document.createElement('button');
+    binBtn.className = 'binbtn';
+    binBtn.title = 'Remove this link and paste a new one';
+    binBtn.textContent = '\uD83D\uDDD1';
+    linkRow.appendChild(link);
+    linkRow.appendChild(binBtn);
+
+    var timeEl = document.createElement('div');
+    timeEl.className = 'audio-time';
+    timeEl.id = 'time-' + i;
+    ac.appendChild(audioRow);
+    ac.appendChild(linkRow);
+    ac.appendChild(timeEl);
+    top.appendChild(ac);
+    card.appendChild(top);
+
+    /* notes grid */
+    var grid = document.createElement('div');
+    grid.className = 'notes-grid';
+    var spacer = document.createElement('div');
+    grid.appendChild(spacer);
+    var hPlus = document.createElement('div');
+    hPlus.className = 'grid-head';
+    hPlus.textContent = '+';
+    var hMinus = document.createElement('div');
+    hMinus.className = 'grid-head';
+    hMinus.textContent = '\u2212';
+    grid.appendChild(hPlus);
+    grid.appendChild(hMinus);
+
+    CRITERIA.forEach(function (c) {
+      var cl = document.createElement('div');
+      cl.className = 'crit-label';
+      cl.textContent = c.short;
+      grid.appendChild(cl);
+      ['plus', 'minus'].forEach(function (sign) {
+        var ta = document.createElement('textarea');
+        ta.className = sign;
+        ta.rows = 2;
+        ta.id = 'note-' + i + '-' + c.key + '-' + sign;
+        ta.placeholder = 'One note per line';
+        grid.appendChild(ta);
+      });
+    });
+    card.appendChild(grid);
+    view1.appendChild(card);
+
+    /* audio wiring */
+    function setStopped() {
+      btn.classList.remove('playing');
+      btn.textContent = '\u25B6 Listen';
+      if (currentPlaying === audios[i]) currentPlaying = null;
+    }
+    function stopOthers() {
+      if (currentPlaying && currentPlaying !== audios[i]) {
+        currentPlaying.pause();
+        var prev = document.querySelector('.playbtn.playing');
+        if (prev) { prev.classList.remove('playing'); prev.textContent = '\u25B6 Listen'; }
+        currentPlaying = null;
+      }
+    }
+    function startPlay() {
+      var a = audios[i];
+      if (!a) return;
+      stopOthers();
+      a.play();
+      currentPlaying = a;
+      btn.classList.add('playing');
+      btn.textContent = '\u2016 Pause';
+    }
+    function activate() {
+      var url = link.value.trim();
+      if (!url) return;
+      link.disabled = true;
+      btn.disabled = false;
+      btn.classList.add('ready');
+      backBtn.disabled = false;
+      fwdBtn.disabled = false;
+      backBtn.classList.add('ready');
+      fwdBtn.classList.add('ready');
+      var a = new Audio(url);
+      audios[i] = a;
+      a.addEventListener('timeupdate', function () {
+        timeEl.textContent = fmt(a.currentTime) + ' / ' + (isFinite(a.duration) ? fmt(a.duration) : '\u2026');
+      });
+      a.addEventListener('loadedmetadata', function () {
+        timeEl.textContent = '0:00 / ' + (isFinite(a.duration) ? fmt(a.duration) : '\u2026');
+      });
+      a.addEventListener('ended', setStopped);
+      a.addEventListener('error', function () {
+        timeEl.textContent = 'Could not load this file';
+      });
+    }
+    function resetAudio() {
+      var a = audios[i];
+      if (a) { a.pause(); }
+      delete audios[i];
+      setStopped();
+      link.disabled = false;
+      link.value = '';
+      link.focus();
+      btn.disabled = true;
+      btn.classList.remove('ready', 'playing');
+      btn.textContent = '\u25B6 Listen';
+      backBtn.disabled = true;
+      fwdBtn.disabled = true;
+      backBtn.classList.remove('ready');
+      fwdBtn.classList.remove('ready');
+      timeEl.textContent = '';
+    }
+    link.addEventListener('change', activate);
+    link.addEventListener('paste', function () { setTimeout(activate, 50); });
+    binBtn.addEventListener('click', resetAudio);
+
+    backBtn.addEventListener('click', function () {
+      var a = audios[i];
+      if (a) a.currentTime = Math.max(0, a.currentTime - 5);
+    });
+    fwdBtn.addEventListener('click', function () {
+      var a = audios[i];
+      if (!a) return;
+      var end = isFinite(a.duration) ? a.duration : a.currentTime + 5;
+      a.currentTime = Math.min(end, a.currentTime + 5);
+    });
+
+    btn.addEventListener('click', function () {
+      var a = audios[i];
+      if (!a) return;
+      if (a.paused) {
+        startPlay();
+      } else {
+        a.pause();
+        setStopped();
+      }
+    });
+
+    qControls[i] = {
+      startPlay: startPlay,
+      setLink: function (url) { link.value = url; activate(); }
+    };
+  });
+
+  function fmt(s) {
+    s = Math.floor(s);
+    return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
+  }
+
+  /* ---------- Apply payload prefill ---------- */
+  (function applyPayload() {
+    var dateEl = document.getElementById('testDate');
+    if (!dateEl.value) {
+      var months = ['\u042F\u043D\u0432\u0430\u0440\u044C','\u0424\u0435\u0432\u0440\u0430\u043B\u044C','\u041C\u0430\u0440\u0442','\u0410\u043F\u0440\u0435\u043B\u044C','\u041C\u0430\u0439','\u0418\u044E\u043D\u044C','\u0418\u044E\u043B\u044C','\u0410\u0432\u0433\u0443\u0441\u0442','\u0421\u0435\u043D\u0442\u044F\u0431\u0440\u044C','\u041E\u043A\u0442\u044F\u0431\u0440\u044C','\u041D\u043E\u044F\u0431\u0440\u044C','\u0414\u0435\u043A\u0430\u0431\u0440\u044C'];
+      var now = new Date();
+      dateEl.value = months[now.getMonth()] + ' ' + now.getFullYear();
+    }
+    if (!payload) return;
+    if (payload.n) document.getElementById('studentName').value = payload.n;
+    if (payload.e) document.getElementById('studentEmail').value = payload.e;
+    if (payload.c) document.getElementById('studentCity').value = payload.c;
+    if (payload.dt) dateEl.value = payload.dt;
+    if (payload.g) studentGender = String(payload.g);
+    if (payload.r) {
+      if (payload.r.s !== undefined) document.getElementById('rs').value = payload.r.s;
+      if (payload.r.t) document.getElementById('rt').value = payload.r.t;
+    }
+    if (payload.l) {
+      if (payload.l.s !== undefined) document.getElementById('ls').value = payload.l.s;
+      if (payload.l.t) document.getElementById('lt').value = payload.l.t;
+    }
+    var filled = 0;
+    if (payload.links && payload.links.length) {
+      payload.links.forEach(function (u, i) {
+        if (u && i < QUESTIONS.length && qControls[i]) { qControls[i].setLink(u); filled++; }
+      });
+    }
+    var msg = document.getElementById('prefillMsg');
+    msg.textContent = 'Loaded from test link: ' + (payload.n || 'student') +
+      (filled ? ' \u00B7 ' + filled + ' audio links ready' : '');
+  })();
+
+  /* ---------- Progress ---------- */
+  function questionGraded(i) {
+    for (var c = 0; c < CRITERIA.length; c++) {
+      var signs = ['plus', 'minus'];
+      for (var s = 0; s < signs.length; s++) {
+        var ta = document.getElementById('note-' + i + '-' + CRITERIA[c].key + '-' + signs[s]);
+        if (ta && ta.value.trim()) return true;
+      }
+    }
+    return false;
+  }
+
+  function encouragement(n, total) {
+    var left = total - n;
+    if (n === 0)  return 'Ready when you are \u2014 one question at a time.';
+    if (n <= 2)   return 'Off to a good start. The first ones are always the slowest.';
+    if (n <= 4)   return 'Nice rhythm \u2014 the notes are piling up.';
+    if (n <= 6)   return 'Almost halfway. Your future self already thanks you.';
+    if (n === 7)  return 'Halfway there! It\u2019s all downhill from here.';
+    if (n <= 10)  return 'Past the halfway mark \u2014 cruising now.';
+    if (n <= 12)  return 'Home straight: only ' + left + ' to go.';
+    if (n === 13) return 'One. Last. Question. You\u2019ve got this.';
+    return '\uD83C\uDF89 All 14 graded \u2014 magnificent work! Flip to Notes by criterion and collect your results.';
+  }
+
+  function updateProgress() {
+    var count = 0;
+    QUESTIONS.forEach(function (_, i) {
+      var done = questionGraded(i);
+      var card = document.getElementById('play-' + i).closest('.qcard');
+      if (card) card.classList.toggle('done', done);
+      if (done) count++;
+    });
+    document.getElementById('progCount').textContent = count;
+    document.getElementById('progFill').style.width = (count / QUESTIONS.length * 100) + '%';
+    document.getElementById('progMsg').textContent = encouragement(count, QUESTIONS.length);
+  }
+
+  view1.addEventListener('input', function (e) {
+    if (e.target && e.target.tagName === 'TEXTAREA') updateProgress();
+  });
+  updateProgress();
+
+  /* ---------- Ctrl+Enter hotkey ---------- */
+  view1.addEventListener('keydown', function (e) {
+    if (!(e.ctrlKey && e.key === 'Enter')) return;
+    var t = e.target;
+    if (!t || t.tagName !== 'TEXTAREA' || t.id.indexOf('note-') !== 0) return;
+    var qIndex = parseInt(t.id.split('-')[1], 10);
+    var next = qIndex + 1;
+    if (next >= QUESTIONS.length) return;
+    e.preventDefault();
+    var target = document.getElementById('note-' + next + '-voc-plus');
+    if (target) {
+      target.focus();
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    if (qControls[next]) qControls[next].startPlay();
+  });
+
+  /* ---------- View toggle ---------- */
+  var btn1 = document.getElementById('btnView1');
+  var btn2 = document.getElementById('btnView2');
+  var v1 = document.getElementById('view1');
+  var v2 = document.getElementById('view2');
+
+  btn1.addEventListener('click', function () {
+    btn1.classList.add('active'); btn2.classList.remove('active');
+    v1.classList.remove('hidden'); v2.classList.add('hidden');
+  });
+  btn2.addEventListener('click', function () {
+    btn2.classList.add('active'); btn1.classList.remove('active');
+    v2.classList.remove('hidden'); v1.classList.add('hidden');
+    buildCritTable();
+    updateGenState();
+  });
+
+  /* ---------- Collate notes ---------- */
+  function collect(critKey, sign) {
+    var out = [];
+    QUESTIONS.forEach(function (_, i) {
+      var ta = document.getElementById('note-' + i + '-' + critKey + '-' + sign);
+      ta.value.split('\n').forEach(function (line) {
+        line = line.trim();
+        if (line) out.push(line);
+      });
+    });
+    return out;
+  }
+
+  function buildCritTable() {
+    var table = document.getElementById('critTable');
+    table.innerHTML = '';
+    CRITERIA.forEach(function (c) {
+      var col = document.createElement('div');
+      col.className = 'crit-col';
+      var h3 = document.createElement('h3');
+      h3.textContent = c.full;
+      col.appendChild(h3);
+
+      var pos = collect(c.key, 'plus');
+      var neg = collect(c.key, 'minus');
+
+      var posDiv = document.createElement('div');
+      posDiv.className = 'pos-list';
+      posDiv.appendChild(makeList(pos, 'No positive notes yet'));
+      col.appendChild(posDiv);
+
+      var divider = document.createElement('div');
+      divider.className = 'divider';
+      col.appendChild(divider);
+
+      var negDiv = document.createElement('div');
+      negDiv.className = 'neg-list';
+      negDiv.appendChild(makeList(neg, 'No negative notes yet'));
+      col.appendChild(negDiv);
+
+      table.appendChild(col);
+    });
+  }
+
+  function makeList(items, emptyText) {
+    if (!items.length) {
+      var e = document.createElement('div');
+      e.className = 'empty';
+      e.textContent = emptyText;
+      return e;
+    }
+    var ol = document.createElement('ol');
+    items.forEach(function (it) {
+      var li = document.createElement('li');
+      li.textContent = it;
+      ol.appendChild(li);
+    });
+    return ol;
+  }
+
+  /* ---------- Scores ---------- */
+  var scoreIds = { flco: 'score-flco', voc: 'score-voc', gra: 'score-gra', pr: 'score-pr' };
+
+  function roundOverall(avg) {
+    return Math.floor(avg * 2) / 2;  /* round down to nearest half or full point */
+  }
+
+  function fmtScore(n) {
+    return (Math.round(n * 10) / 10).toFixed(1);
+  }
+
+  function recalc() {
+    var vals = [];
+    var ok = true;
+    CRITERIA.forEach(function (c) {
+      var raw = document.getElementById(scoreIds[c.key]).value.trim().replace(',', '.');
+      var n = parseFloat(raw);
+      if (raw === '' || isNaN(n)) { ok = false; } else { vals.push(n); }
+    });
+    var el = document.getElementById('overallScore');
+    if (!ok || vals.length !== 4) { el.textContent = '\u2014'; return null; }
+    var avg = (vals[0] + vals[1] + vals[2] + vals[3]) / 4;
+    var overall = roundOverall(avg);
+    el.textContent = fmtScore(overall);
+    return overall;
+  }
+
+  Object.keys(scoreIds).forEach(function (k) {
+    document.getElementById(scoreIds[k]).addEventListener('input', recalc);
+  });
+
+  /* ---------- Copy Results ---------- */
+  document.getElementById('copyBtn').addEventListener('click', function () {
+    var name = document.getElementById('studentName').value.trim() || 'Student';
+    var general = document.getElementById('generalNotes').value.trim();
+    var overall = recalc();
+
+    var lines = [];
+    lines.push('General Comments on ' + name);
+    if (general) lines.push(general);
+    lines.push('');
+
+    var scoreParts = [];
+    CRITERIA.forEach(function (c) {
+      var raw = document.getElementById(scoreIds[c.key]).value.trim().replace(',', '.');
+      var n = parseFloat(raw);
+      scoreParts.push(c.full + ': ' + (isNaN(n) ? '\u2014' : fmtScore(n)));
+    });
+    scoreParts.push('Overall: ' + (overall === null ? '\u2014' : fmtScore(overall)));
+    lines.push('Scores \u2014 ' + scoreParts.join(' | '));
+    lines.push('');
+
+    CRITERIA.forEach(function (c) {
+      lines.push('Comments on ' + c.copyName);
+      lines.push('Positive');
+      var pos = collect(c.key, 'plus');
+      if (pos.length) pos.forEach(function (p) { lines.push('- ' + p); });
+      else lines.push('- \u2014');
+      lines.push('Negative');
+      var neg = collect(c.key, 'minus');
+      if (neg.length) neg.forEach(function (n) { lines.push('- ' + n); });
+      else lines.push('- \u2014');
+      lines.push('');
+    });
+
+    var text = lines.join('\n');
+    var msg = document.getElementById('copyMsg');
+
+    function done(okFlag) {
+      msg.textContent = okFlag ? 'Copied to clipboard' : 'Copy failed \u2014 select and copy manually';
+      setTimeout(function () { msg.textContent = ''; }, 3000);
+    }
+
+    copyText(text, done);
+  });
+
+  function copyText(text, done) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done(true); }, function () { fallbackCopy(text, done); });
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done(ok);
+  }
+
+  /* ============================================================ */
+  /* Generate Report and Email                                     */
+  /* ============================================================ */
+
+  function pctToCEFR(p) {
+    if (p >= 90) return { code: 'C2', label: 'Proficient' };
+    if (p >= 77) return { code: 'C1', label: 'Advanced' };
+    if (p >= 63) return { code: 'B2', label: 'Upper Intermediate' };
+    if (p >= 50) return { code: 'B1', label: 'Intermediate' };
+    if (p >= 35) return { code: 'A2', label: 'Pre-Intermediate' };
+    if (p >= 20) return { code: 'A1', label: 'Elementary' };
+    return { code: 'A0', label: 'Beginner' };
+  }
+
+  function pctToIELTS(p) {
+    if (p >= 98) return 9;
+    if (p >= 94) return 8.5;
+    if (p >= 90) return 8;
+    if (p >= 85) return 7.5;
+    if (p >= 80) return 7;
+    if (p >= 73) return 6.5;
+    if (p >= 66) return 6;
+    if (p >= 58) return 5.5;
+    if (p >= 50) return 5;
+    if (p >= 42) return 4.5;
+    if (p >= 34) return 4;
+    if (p >= 25) return 3.5;
+    if (p >= 15) return 3;
+    return 2.5;
+  }
+
+  function ruErrors(n) {
+    if (n === 0) return '\u0431\u0435\u0437 \u043E\u0448\u0438\u0431\u043E\u043A';
+    var m10 = n % 10, m100 = n % 100;
+    var w = (m10 === 1 && m100 !== 11) ? '\u043E\u0448\u0438\u0431\u043A\u0430'
+          : (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) ? '\u043E\u0448\u0438\u0431\u043A\u0438'
+          : '\u043E\u0448\u0438\u0431\u043E\u043A';
+    return n + ' ' + w;
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function nl2html(s) {
+    return esc(s).split(/\n\s*\n/).map(function (p) {
+      return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
+    }).join('');
+  }
+
+  function translit(s) {
+    var map = { '\u0430':'a','\u0431':'b','\u0432':'v','\u0433':'g','\u0434':'d','\u0435':'e','\u0451':'e','\u0436':'zh','\u0437':'z','\u0438':'i','\u0439':'y','\u043A':'k','\u043B':'l','\u043C':'m','\u043D':'n','\u043E':'o','\u043F':'p','\u0440':'r','\u0441':'s','\u0442':'t','\u0443':'u','\u0444':'f','\u0445':'kh','\u0446':'ts','\u0447':'ch','\u0448':'sh','\u0449':'shch','\u044A':'','\u044B':'y','\u044C':'','\u044D':'e','\u044E':'yu','\u044F':'ya' };
+    return s.toLowerCase().split('').map(function (ch) {
+      return map[ch] !== undefined ? map[ch] : ch;
+    }).join('');
+  }
+
+  function numOf(id) {
+    var raw = document.getElementById(id).value.trim().replace(',', '.');
+    var n = parseFloat(raw);
+    return isNaN(n) ? null : n;
+  }
+
+  function missingList() {
+    var miss = [];
+    if (!document.getElementById('generalNotes').value.trim()) miss.push('General Comment');
+    CRITERIA.forEach(function (c) {
+      if (numOf(scoreIds[c.key]) === null) miss.push(c.short + ' score');
+      if (!collect(c.key, 'plus').length && !collect(c.key, 'minus').length) miss.push(c.short + ' notes');
+    });
+    if (numOf('rs') === null) miss.push('Reading score');
+    if (numOf('ls') === null) miss.push('Listening score');
+    return miss;
+  }
+
+  function updateGenState() {
+    var miss = missingList();
+    var btn = document.getElementById('genBtn');
+    var box = document.getElementById('genMissing');
+    if (miss.length) {
+      btn.disabled = true;
+      box.classList.remove('ready');
+      box.textContent = 'To activate, fill in: ' + miss.join(' \u00B7 ');
+    } else {
+      btn.disabled = false;
+      box.classList.add('ready');
+      box.textContent = 'Everything is in place \u2014 ready to generate.';
+    }
+  }
+  document.addEventListener('input', updateGenState);
+  updateGenState();
+
+  function gatherData() {
+    var name = document.getElementById('studentName').value.trim() || 'Student';
+    var spOverall = recalc();
+    var rs = numOf('rs'), rt = numOf('rt') || 30;
+    var ls = numOf('ls'), lt = numOf('lt') || 30;
+    var rPct = rs / rt * 100;
+    var lPct = ls / lt * 100;
+    var sPct = spOverall / 9 * 100;
+    var avgPct = (rPct + lPct + sPct) / 3;
+    var crits = CRITERIA.map(function (c) {
+      var sc = numOf(scoreIds[c.key]);
+      return {
+        key: c.key, full: c.full, ru: c.ru,
+        score: sc, cefr: pctToCEFR(sc / 9 * 100),
+        pos: collect(c.key, 'plus'), neg: collect(c.key, 'minus')
+      };
+    });
+    return {
+      name: name,
+      first: name.split(/\s+/)[0],
+      email: document.getElementById('studentEmail').value.trim(),
+      city: document.getElementById('studentCity').value.trim(),
+      date: document.getElementById('testDate').value.trim(),
+      comment: document.getElementById('generalNotes').value.trim(),
+      r: { s: rs, t: rt, pct: Math.round(rPct), cefr: pctToCEFR(rPct), ielts: pctToIELTS(rPct) },
+      l: { s: ls, t: lt, pct: Math.round(lPct), cefr: pctToCEFR(lPct), ielts: pctToIELTS(lPct) },
+      sp: { score: spOverall, pct: Math.round(sPct), cefr: pctToCEFR(sPct) },
+      crits: crits,
+      overallPct: Math.round(avgPct),
+      overall: pctToCEFR(avgPct),
+      ieltsAvg: Math.round((pctToIELTS(rPct) + pctToIELTS(lPct) + spOverall) / 3 * 2) / 2,
+      ra: (payload && payload.ra) || null,
+      la: (payload && payload.la) || null
+    };
+  }
+
+  function fmtBand(n) {
+    return (n % 1 === 0) ? n.toFixed(1) : n.toFixed(1);
+  }
+
+  function answerTable(title, rows) {
+    var h = [];
+    h.push('<div class="sect"><div class="k">' + title + '</div>');
+    h.push('<table><tr><th>#</th><th>\u0412\u041E\u041F\u0420\u041E\u0421</th><th>\u041E\u0422\u0412\u0415\u0422</th></tr>');
+    rows.forEach(function (row, idx) {
+      var cell;
+      if (row.ok) {
+        cell = esc(row.a) + ' <span class="ok">\u2713</span>';
+      } else {
+        cell = esc(row.a) + ' <span class="bad">\u2717</span>' +
+          (row.corr ? '<br><span class="corr">\u2192 ' + esc(row.corr) + '</span>' : '');
+      }
+      h.push('<tr><td>' + (idx + 1) + '</td><td>' + esc(row.q) + '</td><td>' + cell + '</td></tr>');
+    });
+    h.push('</table></div>');
+    return h.join('');
+  }
+
+  var CEFR_SCALE = [
+    { code: 'A0', range: '0\u201319%', color: '#9aa1ab' },
+    { code: 'A1', range: '20\u201334%', color: '#e2703a' },
+    { code: 'A2', range: '35\u201349%', color: '#ddaa3c' },
+    { code: 'B1', range: '50\u201362%', color: '#58a15f' },
+    { code: 'B2', range: '63\u201376%', color: '#34a4dd' },
+    { code: 'C1', range: '77\u201389%', color: '#6d5ce8' },
+    { code: 'C2', range: '90\u2013100%', color: '#20242e' }
+  ];
+
+  function buildReportHTML(d) {
+    var h = [];
+    h.push('<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">');
+    h.push('<meta name="viewport" content="width=device-width, initial-scale=1.0">');
+    h.push('<title>\u041E\u0442\u0447\u0451\u0442 RE-Academy \u2014 ' + esc(d.name) + '</title>');
+    h.push('<style>');
+    h.push('body{margin:0;background:#e9ecf2;font-family:"Segoe UI",Arial,Helvetica,sans-serif;color:#1f2937;}');
+    h.push('.page{max-width:920px;margin:24px auto;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(15,23,42,.12);}');
+    h.push('.rhead{background:linear-gradient(120deg,#0d9c85,#17b99c);color:#fff;padding:34px 40px;display:flex;gap:20px;align-items:center;}');
+    h.push('.badge{width:64px;height:64px;border-radius:14px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;flex:0 0 64px;}');
+    h.push('h1{margin:0;font-size:23px;} .rhead p{margin:5px 0 0;opacity:.85;font-size:14px;}');
+    h.push('.sect{padding:26px 40px;border-top:1px solid #eceff4;}');
+    h.push('.k{font-size:11px;letter-spacing:.12em;color:#8a93a3;font-weight:700;margin-bottom:14px;text-transform:uppercase;}');
+    h.push('.stud{display:grid;grid-template-columns:1fr 1fr;gap:12px 30px;font-size:14px;}');
+    h.push('.stud .lbl{color:#8a93a3;font-size:12px;margin-bottom:2px;} .stud .val{font-weight:700;}');
+    h.push('.scale{display:flex;gap:4px;margin-bottom:20px;}');
+    h.push('.scale div{flex:1;text-align:center;color:#fff;padding:8px 2px;font-size:13px;font-weight:700;border-radius:6px;}');
+    h.push('.scale div span{display:block;font-weight:400;font-size:9.5px;opacity:.85;}');
+    h.push('.scale .hit{outline:3px solid #2b2450;outline-offset:2px;}');
+    h.push('.overall{border:1px solid #ddd6fe;background:#f6f4ff;border-radius:14px;padding:20px 24px;display:flex;gap:22px;align-items:center;}');
+    h.push('.lvlcirc{width:88px;height:88px;border-radius:50%;background:#ece8ff;color:#6d5ce8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:25px;flex:0 0 88px;}');
+    h.push('.lvlcirc small{font-size:10px;font-weight:600;}');
+    h.push('.overall h2{margin:0 0 6px;font-size:16px;} .overall p{margin:0;font-size:14px;line-height:1.5;}');
+    h.push('.ielts{border:1px solid #dbeafe;background:#eff6ff;border-radius:14px;padding:16px 22px;margin-top:16px;font-size:14px;color:#1e3a8a;line-height:1.6;}');
+    h.push('.ielts .small{font-size:12px;opacity:.75;}');
+    h.push('.cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;}');
+    h.push('.card{border:1px solid #e5e7eb;border-radius:14px;padding:18px;display:flex;gap:16px;align-items:center;}');
+    h.push('.card.dash{border-style:dashed;background:#fafafa;color:#9aa1ab;}');
+    h.push('.ring{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;flex:0 0 64px;border:6px solid;font-size:15px;}');
+    h.push('.card .t{font-size:11px;letter-spacing:.08em;color:#8a93a3;font-weight:700;text-transform:uppercase;}');
+    h.push('.card .s{font-size:21px;font-weight:800;margin:2px 0;} .card .m{font-size:12.5px;color:#6b7280;} .card .lvl{font-size:13px;font-weight:700;margin-top:2px;}');
+    h.push('.comment p{font-size:14px;line-height:1.65;margin:0 0 12px;}');
+    h.push('.crit{margin-bottom:26px;}');
+    h.push('.crit h3{font-size:15px;margin:0 0 10px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}');
+    h.push('.crit h3 .cef{font-size:12px;font-weight:700;color:#fff;background:#6d5ce8;border-radius:6px;padding:2px 8px;}');
+    h.push('.crit h3 .sc{font-size:13px;color:#6b7280;font-weight:600;}');
+    h.push('.crit .lead{font-size:12px;letter-spacing:.04em;font-weight:700;margin:10px 0 6px;}');
+    h.push('.crit .lead.g{color:#16803c;} .crit .lead.b{color:#b3403a;}');
+    h.push('.crit ul{margin:0;padding-left:20px;font-size:13.5px;line-height:1.6;}');
+    h.push('table{width:100%;border-collapse:collapse;font-size:13px;}');
+    h.push('th{color:#8a93a3;font-size:11px;letter-spacing:.08em;text-align:left;}');
+    h.push('td,th{border-bottom:1px solid #eef0f4;padding:8px;vertical-align:top;}');
+    h.push('td:first-child,th:first-child{width:34px;color:#8a93a3;}');
+    h.push('.ok{color:#16a34a;font-weight:700;} .bad{color:#dc2626;font-weight:700;} .corr{color:#dc2626;font-size:12px;}');
+    h.push('.printbar{position:fixed;top:14px;right:14px;}');
+    h.push('.printbar button{font-family:inherit;font-size:14px;padding:9px 18px;border:none;border-radius:8px;background:#0d9c85;color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(13,156,133,.4);}');
+    h.push('footer{padding:20px 40px;color:#98a1b0;font-size:12px;text-align:center;border-top:1px solid #eceff4;}');
+    h.push('@media print{.printbar{display:none;}.page{box-shadow:none;margin:0;border-radius:0;}body{background:#fff;}}');
+    h.push('</style></head><body>');
+    h.push('<div class="printbar"><button onclick="window.print()">\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u0432 PDF</button></div>');
+    h.push('<div class="page">');
+
+    /* Header */
+    h.push('<div class="rhead"><div class="badge">RE</div><div>');
+    h.push('<h1>\u041E\u0442\u0447\u0451\u0442 RE-Academy \u2014 \u0412\u0441\u0442\u0443\u043F\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u0442\u0435\u0441\u0442</h1>');
+    h.push('<p>\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u044B \u043E\u0446\u0435\u043D\u043A\u0438 \u0443\u0440\u043E\u0432\u043D\u044F \u0430\u043D\u0433\u043B\u0438\u0439\u0441\u043A\u043E\u0433\u043E \u044F\u0437\u044B\u043A\u0430</p>');
+    h.push('</div></div>');
+
+    /* Student */
+    h.push('<div class="sect"><div class="k">\u0421\u0442\u0443\u0434\u0435\u043D\u0442</div><div class="stud">');
+    h.push('<div><div class="lbl">\u0418\u043C\u044F</div><div class="val">' + esc(d.name) + '</div></div>');
+    h.push('<div><div class="lbl">\u0414\u0430\u0442\u0430 \u0442\u0435\u0441\u0442\u0430</div><div class="val">' + esc(d.date || '\u2014') + '</div></div>');
+    h.push('<div><div class="lbl">\u0413\u043E\u0440\u043E\u0434</div><div class="val">' + esc(d.city || '\u2014') + '</div></div>');
+    h.push('<div><div class="lbl">Email</div><div class="val">' + esc(d.email || '\u2014') + '</div></div>');
+    h.push('</div></div>');
+
+    /* Level scale + overall */
+    h.push('<div class="sect"><div class="k">\u0418\u0442\u043E\u0433\u043E\u0432\u044B\u0439 \u0443\u0440\u043E\u0432\u0435\u043D\u044C</div>');
+    h.push('<div class="scale">');
+    CEFR_SCALE.forEach(function (b) {
+      var hit = (b.code === d.overall.code) ? ' class="hit"' : '';
+      h.push('<div' + hit + ' style="background:' + b.color + '">' + b.code + '<span>' + b.range + '</span></div>');
+    });
+    h.push('</div>');
+    var praise = d.overallPct >= 77 ? '\u041E\u0442\u043B\u0438\u0447\u043D\u044B\u0439 \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 \u043F\u043E \u0432\u0441\u0435\u043C \u0442\u0440\u0451\u043C \u043D\u0430\u0432\u044B\u043A\u0430\u043C.'
+      : d.overallPct >= 50 ? '\u0425\u043E\u0440\u043E\u0448\u0438\u0439 \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 \u2014 \u0435\u0441\u0442\u044C \u043D\u0430\u0434\u0451\u0436\u043D\u0430\u044F \u0431\u0430\u0437\u0430 \u0434\u043B\u044F \u0440\u043E\u0441\u0442\u0430.'
+      : '\u0425\u043E\u0440\u043E\u0448\u0430\u044F \u043E\u0442\u043F\u0440\u0430\u0432\u043D\u0430\u044F \u0442\u043E\u0447\u043A\u0430 \u0434\u043B\u044F \u0434\u0430\u043B\u044C\u043D\u0435\u0439\u0448\u0435\u0439 \u0440\u0430\u0431\u043E\u0442\u044B.';
+    h.push('<div class="overall"><div class="lvlcirc">' + d.overall.code + '<small>' + esc(d.overall.label) + '</small></div><div>');
+    h.push('<h2>\u041F\u0440\u0435\u0434\u0432\u0430\u0440\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u043E\u0431\u0449\u0438\u0439 \u0443\u0440\u043E\u0432\u0435\u043D\u044C: ' + d.overall.code + ' ' + esc(d.overall.label) + '</h2>');
+    h.push('<p>\u0421\u0440\u0435\u0434\u043D\u0435\u0435 \u043F\u043E \u0442\u0440\u0451\u043C \u0438\u0437\u043C\u0435\u0440\u0435\u043D\u043D\u044B\u043C \u043D\u0430\u0432\u044B\u043A\u0430\u043C: \u0427\u0442\u0435\u043D\u0438\u0435 (' + d.r.pct + '%) + \u0410\u0443\u0434\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 (' + d.l.pct + '%) + \u0413\u043E\u0432\u043E\u0440\u0435\u043D\u0438\u0435 (' + d.sp.pct + '%) = ' + d.overallPct + '% \u2192 ' + d.overall.code + '. ' + praise + ' \u041F\u0438\u0441\u044C\u043C\u043E \u0432 \u0442\u0435\u0441\u0442\u0435 \u043D\u0435 \u043E\u0446\u0435\u043D\u0438\u0432\u0430\u043B\u043E\u0441\u044C.</p>');
+    h.push('</div></div>');
+    h.push('<div class="ielts"><strong>\u041E\u0440\u0438\u0435\u043D\u0442\u0438\u0440\u043E\u0432\u043E\u0447\u043D\u044B\u0439 \u0431\u0430\u043B\u043B IELTS</strong> (\u0431\u0435\u0437 Writing):<br>');
+    h.push('Reading ~' + fmtBand(d.r.ielts) + ' \u00B7 Listening ~' + fmtBand(d.l.ielts) + ' \u00B7 Speaking ' + fmtScore(d.sp.score) + ' \u2192 \u0441\u0440\u0435\u0434\u043D\u0438\u0439 \u2248 <strong>' + fmtBand(d.ieltsAvg) + '</strong><br>');
+    h.push('<span class="small">(\u0420\u0430\u0441\u0447\u0451\u0442 \u043F\u0440\u0438\u0431\u043B\u0438\u0437\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0439; \u0438\u0442\u043E\u0433\u043E\u0432\u044B\u0439 \u0431\u0430\u043B\u043B \u0444\u043E\u0440\u043C\u0438\u0440\u0443\u0435\u0442\u0441\u044F \u043F\u043E 4 \u043D\u0430\u0432\u044B\u043A\u0430\u043C \u0432\u043A\u043B\u044E\u0447\u0430\u044F Writing)</span></div>');
+    h.push('</div>');
+
+    /* Section cards */
+    h.push('<div class="sect"><div class="k">\u0411\u0430\u043B\u043B\u044B \u043F\u043E \u0440\u0430\u0437\u0434\u0435\u043B\u0430\u043C</div><div class="cards">');
+    h.push('<div class="card"><div class="ring" style="border-color:#20242e;color:#20242e;">' + d.r.s + '</div><div><div class="t">\uD83D\uDCD6 \u0427\u0442\u0435\u043D\u0438\u0435</div><div class="s">' + d.r.s + ' / ' + d.r.t + '</div><div class="m">' + d.r.pct + '% \u00B7 ' + ruErrors(d.r.t - d.r.s) + '</div><div class="lvl" style="color:#20242e;">' + d.r.cefr.code + ' ' + esc(d.r.cefr.label) + '</div></div></div>');
+    h.push('<div class="card"><div class="ring" style="border-color:#6d5ce8;color:#6d5ce8;">' + d.l.s + '</div><div><div class="t">\uD83C\uDFA7 \u0410\u0443\u0434\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435</div><div class="s" style="color:#6d5ce8;">' + d.l.s + ' / ' + d.l.t + '</div><div class="m">' + d.l.pct + '% \u00B7 ' + ruErrors(d.l.t - d.l.s) + '</div><div class="lvl" style="color:#6d5ce8;">' + d.l.cefr.code + ' ' + esc(d.l.cefr.label) + '</div></div></div>');
+    h.push('<div class="card"><div class="ring" style="border-color:#34a4dd;color:#34a4dd;">' + fmtScore(d.sp.score) + '</div><div><div class="t">\uD83C\uDFA4 \u0413\u043E\u0432\u043E\u0440\u0435\u043D\u0438\u0435</div><div class="s" style="color:#34a4dd;">' + fmtScore(d.sp.score) + ' / 9</div><div class="m">' + d.sp.pct + '% \u00B7 \u043E\u0446\u0435\u043D\u043A\u0430 \u043F\u0440\u0435\u043F\u043E\u0434\u0430\u0432\u0430\u0442\u0435\u043B\u044F</div><div class="lvl" style="color:#34a4dd;">' + d.sp.cefr.code + ' ' + esc(d.sp.cefr.label) + '</div></div></div>');
+    h.push('<div class="card dash"><div class="ring" style="border-color:#d7dbe2;color:#b6bcc7;border-style:dashed;">\u2014</div><div><div class="t">\u270D\uFE0F \u041F\u0438\u0441\u044C\u043C\u043E</div><div class="s" style="color:#b6bcc7;">\u043D\u0435 \u043E\u0446\u0435\u043D\u0438\u0432\u0430\u043B\u043E\u0441\u044C</div><div class="m">\u041F\u0440\u043E\u0432\u0435\u0440\u044F\u0435\u0442\u0441\u044F \u0432\u0440\u0443\u0447\u043D\u0443\u044E \u0432 \u0440\u0430\u043C\u043A\u0430\u0445 \u0437\u0430\u043D\u044F\u0442\u0438\u0439</div></div></div>');
+    h.push('</div></div>');
+
+    /* Teacher comment */
+    h.push('<div class="sect comment"><div class="k">\u041A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0439 \u043F\u0440\u0435\u043F\u043E\u0434\u0430\u0432\u0430\u0442\u0435\u043B\u044F</div>');
+    h.push(nl2html(d.comment));
+    h.push('</div>');
+
+    /* Speaking breakdown */
+    h.push('<div class="sect"><div class="k">\u0413\u043E\u0432\u043E\u0440\u0435\u043D\u0438\u0435 \u2014 \u043F\u043E\u0434\u0440\u043E\u0431\u043D\u044B\u0439 \u0440\u0430\u0437\u0431\u043E\u0440 (' + d.sp.cefr.code + ' \u2192 ' + fmtScore(d.sp.score) + ' / 9.0)</div>');
+    d.crits.forEach(function (c) {
+      h.push('<div class="crit"><h3>' + esc(c.ru) + ' <span class="cef">' + c.cefr.code + '</span> <span class="sc">' + fmtScore(c.score) + ' / 9.0</span></h3>');
+      if (c.pos.length) {
+        h.push('<div class="lead g">\u0423\u0434\u0430\u0447\u043D\u044B\u0435 \u043F\u0440\u0438\u043C\u0435\u0440\u044B:</div><ul>');
+        c.pos.forEach(function (n) { h.push('<li>' + esc(n) + '</li>'); });
+        h.push('</ul>');
+      }
+      if (c.neg.length) {
+        h.push('<div class="lead b">\u0427\u0442\u043E \u0441\u0442\u043E\u0438\u0442 \u0434\u043E\u0440\u0430\u0431\u043E\u0442\u0430\u0442\u044C:</div><ul>');
+        c.neg.forEach(function (n) { h.push('<li>' + esc(n) + '</li>'); });
+        h.push('</ul>');
+      }
+      h.push('</div>');
+    });
+    h.push('</div>');
+
+    /* Answer tables if provided by the test link */
+    if (d.ra && d.ra.length) {
+      h.push(answerTable('\u0427\u0442\u0435\u043D\u0438\u0435 \u2014 \u0440\u0430\u0437\u0431\u043E\u0440 \u043E\u0442\u0432\u0435\u0442\u043E\u0432 (' + d.r.s + ' / ' + d.r.t + ')', d.ra));
+    }
+    if (d.la && d.la.length) {
+      h.push(answerTable('\u0410\u0443\u0434\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u2014 \u0440\u0430\u0437\u0431\u043E\u0440 \u043E\u0442\u0432\u0435\u0442\u043E\u0432 (' + d.l.s + ' / ' + d.l.t + ')', d.la));
+    }
+
+    h.push('<footer>\u00A9 2014\u20132026 RE-Academy \u00B7 Royal English Academy \u00B7 \u042D\u0442\u043E\u0442 \u043E\u0442\u0447\u0451\u0442 \u0441\u0444\u043E\u0440\u043C\u0438\u0440\u043E\u0432\u0430\u043D \u0441\u0438\u0441\u0442\u0435\u043C\u043E\u0439 WhatsMyLevel</footer>');
+    h.push('</div></body></html>');
+    return h.join('\n');
+  }
+
+  function buildEmail(d) {
+    var lvl = d.overall.code + ' (' + d.overall.label + ')';
+    var isHigh = ['B2', 'C1', 'C2'].indexOf(d.overall.code) >= 0;
+    var lines = [];
+    if (isHigh) {
+      lines.push('Dear ' + d.first + ',');
+      lines.push('');
+      lines.push(d.comment);
+      lines.push('');
+      var praise = (d.overall.code === 'B2')
+        ? 'This is a strong result, and it\u2019s well-deserved.'
+        : 'Obviously, this is a great result, and it\u2019s well-deserved.';
+      lines.push('The overall result is a ' + lvl + '. ' + praise);
+      lines.push('');
+      lines.push('Please download the attached PDF to see my comments. Hope to see you in one of my courses, IELTS: Foundations or IELTS: Success, or in individual lessons.');
+      lines.push('');
+      lines.push('Best,');
+      lines.push('Gleb Lantsman and Royal English Academy');
+    } else {
+      var greet;
+      var g = studentGender.toLowerCase();
+      if (g.indexOf('\u0436\u0435\u043D') === 0) greet = '\u0414\u043E\u0440\u043E\u0433\u0430\u044F ' + d.first + '!';
+      else if (g.indexOf('\u043C\u0443\u0436') === 0) greet = '\u0414\u043E\u0440\u043E\u0433\u043E\u0439 ' + d.first + '!';
+      else greet = '\u0417\u0434\u0440\u0430\u0432\u0441\u0442\u0432\u0443\u0439\u0442\u0435, ' + d.first + '!';
+      lines.push(greet);
+      lines.push('');
+      lines.push(d.comment);
+      lines.push('');
+      lines.push('\u041E\u0431\u0449\u0438\u0439 \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 \u2014 ' + lvl + '. \u042D\u0442\u043E \u0445\u043E\u0440\u043E\u0448\u0430\u044F \u0431\u0430\u0437\u0430, \u0438 \u043D\u0430 \u0437\u0430\u043D\u044F\u0442\u0438\u044F\u0445 \u043C\u044B \u043F\u043E\u043C\u043E\u0436\u0435\u043C \u0432\u0430\u043C \u0443\u0432\u0435\u0440\u0435\u043D\u043D\u043E \u0432\u044B\u0440\u0430\u0441\u0442\u0438 \u0434\u0430\u043B\u044C\u0448\u0435.');
+      lines.push('');
+      lines.push('\u041F\u043E\u0436\u0430\u043B\u0443\u0439\u0441\u0442\u0430, \u043E\u0442\u043A\u0440\u043E\u0439\u0442\u0435 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u043D\u044B\u0439 PDF-\u043E\u0442\u0447\u0451\u0442 \u2014 \u0432 \u043D\u0451\u043C \u043F\u043E\u0434\u0440\u043E\u0431\u043D\u044B\u0435 \u043A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0438 \u043F\u043E \u043A\u0430\u0436\u0434\u043E\u0439 \u0447\u0430\u0441\u0442\u0438 \u0442\u0435\u0441\u0442\u0430. \u0411\u0443\u0434\u0443 \u0440\u0430\u0434 \u0432\u0438\u0434\u0435\u0442\u044C \u0432\u0430\u0441 \u043D\u0430 \u043E\u0434\u043D\u043E\u043C \u0438\u0437 \u043C\u043E\u0438\u0445 \u043A\u0443\u0440\u0441\u043E\u0432 \u2014 IELTS: Foundations \u0438\u043B\u0438 IELTS: Success \u2014 \u043B\u0438\u0431\u043E \u043D\u0430 \u0438\u043D\u0434\u0438\u0432\u0438\u0434\u0443\u0430\u043B\u044C\u043D\u044B\u0445 \u0437\u0430\u043D\u044F\u0442\u0438\u044F\u0445.');
+      lines.push('');
+      lines.push('\u0421 \u0443\u0432\u0430\u0436\u0435\u043D\u0438\u0435\u043C,');
+      lines.push('\u0413\u043B\u0435\u0431 \u041B\u0430\u043D\u0446\u043C\u0430\u043D, Royal English Academy');
+    }
+    return lines.join('\n');
+  }
+
+  document.getElementById('genBtn').addEventListener('click', function () {
+    var d = gatherData();
+    if (d.sp.score === null || d.r.s === null || d.l.s === null) return;
+
+    var html = buildReportHTML(d);
+    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    var a = document.createElement('a');
+    var slug = translit(d.name).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'student';
+    a.href = URL.createObjectURL(blob);
+    a.download = 'report-' + slug + '.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
+
+    document.getElementById('emailOut').value = buildEmail(d);
+    document.getElementById('emailWrap').classList.remove('hidden');
+    document.getElementById('genMsg').textContent =
+      'Report downloaded \u2014 open it and press \u00AB\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u0432 PDF\u00BB (or Ctrl+P) to save it as a PDF.';
+  });
+
+  document.getElementById('copyEmailBtn').addEventListener('click', function () {
+    var msg = document.getElementById('genMsg');
+    copyText(document.getElementById('emailOut').value, function (okFlag) {
+      msg.textContent = okFlag ? 'Email text copied to clipboard' : 'Copy failed \u2014 select and copy manually';
+      setTimeout(function () { msg.textContent = ''; }, 3000);
+    });
+  });
+
+})();
+</script>
+</body>
+</html>
