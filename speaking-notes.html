@@ -261,7 +261,7 @@
 
 <div class="progress-wrap">
   <div class="progress-top">
-    <span class="progress-count"><span class="big" id="progCount">0</span> / 14 questions graded</span>
+    <span class="progress-count"><span class="big" id="progCount">0</span> / <span id="progTotal">15</span> questions graded</span>
     <span class="progress-msg" id="progMsg"></span>
   </div>
   <div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
@@ -350,7 +350,8 @@
     { part: 'Part 3 / Skills and abilities', text: 'Which skills should children learn at school, and which skills at home?' },
     { part: 'Part 3 / Skills and abilities', text: 'Which skills do you think will be important in the future?' },
     { part: 'Part 3 / Salaries for skilled people', text: 'Which kinds of jobs have the highest salaries in your country?' },
-    { part: 'Part 3 / Salaries for skilled people', text: 'Are there any other jobs that you think should have high salaries?' }
+    { part: 'Part 3 / Salaries for skilled people', text: 'Are there any other jobs that you think should have high salaries?' },
+    { part: 'Part 3 / Salaries for skilled people', text: 'Some people say it would be better for society if everyone got the same salary. What do you think about that?' }
   ];
 
   var audios = {};        // qIndex -> Audio object
@@ -358,20 +359,20 @@
   var currentPlaying = null;
   var studentGender = ''; // from test link, if present
 
-  /* ---------- Payload from test link (#d=...) ---------- */
+  /* ---------- Payload from test link (#u=... or #d=...) ---------- */
   var payload = null;
-  (function parsePayload() {
+  function decodeInlinePayload() {
     var m = location.hash.match(/[#&]d=([^&]+)/);
-    if (!m) return;
+    if (!m) return null;
     try {
       var s = m[1].replace(/-/g, '+').replace(/_/g, '/');
       while (s.length % 4) s += '=';
       var bin = atob(s);
       var bytes = new Uint8Array(bin.length);
       for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      payload = JSON.parse(new TextDecoder('utf-8').decode(bytes));
-    } catch (e) { payload = null; }
-  })();
+      return JSON.parse(new TextDecoder('utf-8').decode(bytes));
+    } catch (e) { return null; }
+  }
 
   /* ---------- Build View 1 ---------- */
   var view1 = document.getElementById('view1');
@@ -581,36 +582,64 @@
   }
 
   /* ---------- Apply payload prefill ---------- */
-  (function applyPayload() {
+  function applyPayload(p) {
+    if (!p) return;
+    payload = p;
+    var dateEl = document.getElementById('testDate');
+    if (p.n) document.getElementById('studentName').value = p.n;
+    if (p.e) document.getElementById('studentEmail').value = p.e;
+    if (p.c) document.getElementById('studentCity').value = p.c;
+    if (p.dt) dateEl.value = p.dt;
+    if (p.g) studentGender = String(p.g);
+    if (p.r) {
+      if (p.r.s !== undefined && p.r.s !== null) document.getElementById('rs').value = p.r.s;
+      if (p.r.t) document.getElementById('rt').value = p.r.t;
+    }
+    if (p.l) {
+      if (p.l.s !== undefined && p.l.s !== null) document.getElementById('ls').value = p.l.s;
+      if (p.l.t) document.getElementById('lt').value = p.l.t;
+    }
+    var filled = 0;
+    if (p.links && p.links.length) {
+      p.links.forEach(function (u, i) {
+        if (u && i < QUESTIONS.length && qControls[i]) { qControls[i].setLink(u); filled++; }
+      });
+    }
+    var msg = document.getElementById('prefillMsg');
+    msg.textContent = 'Loaded from test link: ' + (p.n || 'student') +
+      (filled ? ' \u00B7 ' + filled + ' audio links ready' : '');
+    updateGenState();
+  }
+
+  (function initPrefill() {
     var dateEl = document.getElementById('testDate');
     if (!dateEl.value) {
       var months = ['\u042F\u043D\u0432\u0430\u0440\u044C','\u0424\u0435\u0432\u0440\u0430\u043B\u044C','\u041C\u0430\u0440\u0442','\u0410\u043F\u0440\u0435\u043B\u044C','\u041C\u0430\u0439','\u0418\u044E\u043D\u044C','\u0418\u044E\u043B\u044C','\u0410\u0432\u0433\u0443\u0441\u0442','\u0421\u0435\u043D\u0442\u044F\u0431\u0440\u044C','\u041E\u043A\u0442\u044F\u0431\u0440\u044C','\u041D\u043E\u044F\u0431\u0440\u044C','\u0414\u0435\u043A\u0430\u0431\u0440\u044C'];
       var now = new Date();
       dateEl.value = months[now.getMonth()] + ' ' + now.getFullYear();
     }
-    if (!payload) return;
-    if (payload.n) document.getElementById('studentName').value = payload.n;
-    if (payload.e) document.getElementById('studentEmail').value = payload.e;
-    if (payload.c) document.getElementById('studentCity').value = payload.c;
-    if (payload.dt) dateEl.value = payload.dt;
-    if (payload.g) studentGender = String(payload.g);
-    if (payload.r) {
-      if (payload.r.s !== undefined) document.getElementById('rs').value = payload.r.s;
-      if (payload.r.t) document.getElementById('rt').value = payload.r.t;
-    }
-    if (payload.l) {
-      if (payload.l.s !== undefined) document.getElementById('ls').value = payload.l.s;
-      if (payload.l.t) document.getElementById('lt').value = payload.l.t;
-    }
-    var filled = 0;
-    if (payload.links && payload.links.length) {
-      payload.links.forEach(function (u, i) {
-        if (u && i < QUESTIONS.length && qControls[i]) { qControls[i].setLink(u); filled++; }
-      });
-    }
+
+    /* Inline data in the link itself (#d=...) */
+    var inline = decodeInlinePayload();
+    if (inline) { applyPayload(inline); return; }
+
+    /* Data stored as a JSON file, linked via #u=... (the format the
+       test's report email uses) */
+    var mu = location.hash.match(/[#&]u=([^&]+)/);
+    if (!mu) return;
     var msg = document.getElementById('prefillMsg');
-    msg.textContent = 'Loaded from test link: ' + (payload.n || 'student') +
-      (filled ? ' \u00B7 ' + filled + ' audio links ready' : '');
+    msg.textContent = 'Loading test data\u2026';
+    var jsonUrl;
+    try { jsonUrl = decodeURIComponent(mu[1]); } catch (e) { jsonUrl = mu[1]; }
+    fetch(jsonUrl)
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      })
+      .then(function (t) { applyPayload(JSON.parse(t)); })
+      .catch(function () {
+        msg.textContent = 'Could not load the test data from this link \u2014 use the backup section of the email, or paste the audio links manually.';
+      });
   })();
 
   /* ---------- Progress ---------- */
@@ -635,7 +664,7 @@
     if (n <= 10)  return 'Past the halfway mark \u2014 cruising now.';
     if (n <= 12)  return 'Home straight: only ' + left + ' to go.';
     if (n === 13) return 'One. Last. Question. You\u2019ve got this.';
-    return '\uD83C\uDF89 All 14 graded \u2014 magnificent work! Flip to Notes by criterion and collect your results.';
+    return '\uD83C\uDF89 All ' + total + ' graded \u2014 magnificent work! Flip to Notes by criterion and collect your results.';
   }
 
   function updateProgress() {
@@ -650,6 +679,8 @@
     document.getElementById('progFill').style.width = (count / QUESTIONS.length * 100) + '%';
     document.getElementById('progMsg').textContent = encouragement(count, QUESTIONS.length);
   }
+
+  document.getElementById('progTotal').textContent = QUESTIONS.length;
 
   view1.addEventListener('input', function (e) {
     if (e.target && e.target.tagName === 'TEXTAREA') updateProgress();
@@ -984,11 +1015,12 @@
     h.push('<div class="sect"><div class="k">' + title + '</div>');
     h.push('<table><tr><th>#</th><th>\u0412\u041E\u041F\u0420\u041E\u0421</th><th>\u041E\u0422\u0412\u0415\u0422</th></tr>');
     rows.forEach(function (row, idx) {
+      var aTxt = row.a ? esc(row.a) : '<em>\u043D\u0435 \u043E\u0442\u0432\u0435\u0447\u0435\u043D\u043E</em>';
       var cell;
       if (row.ok) {
-        cell = esc(row.a) + ' <span class="ok">\u2713</span>';
+        cell = aTxt + ' <span class="ok">\u2713</span>';
       } else {
-        cell = esc(row.a) + ' <span class="bad">\u2717</span>' +
+        cell = aTxt + ' <span class="bad">\u2717</span>' +
           (row.corr ? '<br><span class="corr">\u2192 ' + esc(row.corr) + '</span>' : '');
       }
       h.push('<tr><td>' + (idx + 1) + '</td><td>' + esc(row.q) + '</td><td>' + cell + '</td></tr>');
