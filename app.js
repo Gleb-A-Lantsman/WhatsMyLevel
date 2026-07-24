@@ -1284,7 +1284,7 @@ async function uploadSpeakingRecording(rec) {
     });
     if (!uploadRes.ok) throw new Error(`Upload failed for ${rec.questionId}`);
     const { url } = await uploadRes.json();
-    state.uploadedSpeaking.push({ part: rec.part, topic: rec.topic, prompt: rec.prompt, audioUrl: url });
+    state.uploadedSpeaking.push({ questionId: rec.questionId, part: rec.part, topic: rec.topic, prompt: rec.prompt, audioUrl: url });
     // Do NOT call sendPartialReport() here — that would fire an email after
     // every single question (15+ emails per student). Instead a single
     // delayed partial send is scheduled when Speaking starts (see goToSpeakingTask).
@@ -1303,6 +1303,7 @@ async function uploadSpeakingRecording(rec) {
 function buildReportPayload(status) {
   return {
     status, // 'completed' | 'partial' | 'abandoned'
+    sessionId: state.sessionId,
     student: state.studentInfo,
     reading: computeSectionScore('reading'),
     listening: computeSectionScore('listening'),
