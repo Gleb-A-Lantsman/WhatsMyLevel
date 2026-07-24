@@ -7,16 +7,25 @@
  * Can be called at several points, distinguished by `payload.status`:
  *   'completed' — the student finished the whole test normally.
  *   'partial'   — a silent milestone update (after Reading, after
- *                 Listening, after each Speaking answer). Each one
- *                 overwrites the previous in the teacher's inbox in
- *                 spirit (same student, growing data) — there is no
- *                 dedup at the email level, so the teacher may see
- *                 several emails for one student if they progress
- *                 normally. The LAST one before normal completion is
- *                 superseded by the 'completed' email.
+ *                 Listening, and 25 minutes into Speaking).
  *   'abandoned' — sent via navigator.sendBeacon when the student closes
  *                 the tab mid-test. Carries whatever was available at
  *                 that moment.
+ *
+ * NEW (July 2026): instead of a pile of Supabase links + tables to work
+ * through, the teacher's email now leads with ONE link that opens the
+ * Speaking Notes review page (speaking-notes.html) with everything
+ * already filled in: student details, Reading/Listening scores and
+ * answer breakdowns, and every Speaking audio link pasted into its
+ * question slot.
+ *
+ * How the link works: this function saves the whole review dataset as a
+ * JSON file in Supabase Storage (by calling the sibling save-review
+ * function — same bucket and lifetime as the audio files), then links
+ * to  speaking-notes.html#u=<url-of-that-json> . The review page
+ * fetches the JSON and pre-fills itself. If saving the JSON fails for
+ * any reason, the email automatically falls back to the old full-table
+ * layout, so no data is ever lost.
  *
  * Required environment variables (set in Netlify, never in the code):
  *   GMAIL_USER          — the Gmail address sending the report
@@ -27,17 +36,25 @@
  *                          for the account first). It's a 16-character
  *                          code with no spaces when you paste it in.
  *
- * Change RECIPIENT_EMAIL below if the report should go somewhere else.
+ * Change RECIPIENT_EMAIL / REVIEW_PAGE_URL below if either moves.
  * -----------------------------------------------------------------------
  */
 const nodemailer = require('nodemailer');
 
 const RECIPIENT_EMAIL = 'lantsmangleb@gmail.com';
+const REVIEW_PAGE_URL = 'https://re-entry-test.netlify.app/speaking-notes.html';
 
 function escapeHtml(str) {
   return String(str === undefined || str === null ? '' : str).replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[c]));
+}
+
+function ruMonthYear() {
+  const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+  const now = new Date();
+  return `${months[now.getMonth()]} ${now.getFullYear()}`;
 }
 
 function renderBreakdownTable(breakdown) {
@@ -128,7 +145,8 @@ function renderAssessmentTemplate(reading, listening, speaking) {
   const rCefr  = percentToCefr(rPct);
   const lCefr  = percentToCefr(lPct);
   const oCefr  = percentToCefr(avgPct);
-  const speakingCount = (speaking || []).length;
+  const speakingCount = (speaking || []).filter(s => s.audioUrl).length;
+  const speakingTotal = (speaking || []).length || 15;
 
   return `
     <div style="margin-top:32px;border-top:2px solid #e3e8ef;padding-top:24px;">
@@ -160,7 +178,7 @@ function renderAssessmentTemplate(reading, listening, speaking) {
       <!-- Speaking section -->
       <div style="border:1px solid #e3e8ef;border-radius:8px;padding:14px 18px;margin-bottom:14px;">
         <div style="font-size:13px;font-weight:700;margin-bottom:6px;">🎤 ГОВОРЕНИЕ</div>
-        <div style="font-size:12px;color:#5b6472;margin-bottom:8px;">Записей получено: ${speakingCount} из 15</div>
+        <div style="font-size:12px;color:#5b6472;margin-bottom:8px;">Записей получено: ${speakingCount} из ${speakingTotal}</div>
         <div style="font-size:12px;color:#5b6472;">Оценка преподавателя:</div>
         <div style="border:1px dashed #b6c8e8;border-radius:6px;padding:10px 14px;min-height:60px;margin-top:6px;color:#9aa5b1;font-size:13px;font-style:italic;">
           [ Заполнить после прослушивания ответов ]
@@ -197,7 +215,8 @@ function renderAssessmentTemplate(reading, listening, speaking) {
 }
 
 function renderSpeakingTable(speaking) {
-  if (!speaking || speaking.length === 0) {
+  const withAudio = (speaking || []).filter(s => s.audioUrl);
+  if (!speaking || speaking.length === 0 || withAudio.length === 0) {
     return '<p style="color:#5b6472;font-size:13px;">Раздел «Говорение» ещё не начат или ни один ответ не был записан.</p>';
   }
   const rows = speaking.map((item) => `
@@ -239,6 +258,102 @@ function renderStatusBanner(status) {
   </div>`;
 }
 
+// -----------------------------------------------------------------------
+// Review-page link: package the whole dataset for speaking-notes.html
+// -----------------------------------------------------------------------
+
+// The 15 Speaking questions, in the exact order data.js defines them and
+// the review page lists them. Audio is matched to these by questionId
+// (NOT by arrival order), so a slow upload that finishes out of order
+// still lands in the right slot. Keep this in sync with data.js if the
+// speaking questions ever change.
+const SPEAKING_QUESTION_ORDER = [
+  'p1q1', 'p1q2', 'p1q3', 'p1q4', 'p1q5', 'p1q6', 'p1q7', 'p1q8',
+  'p2q1',
+  'p3q1', 'p3q2', 'p3q3', 'p3q4', 'p3q5', 'p3q6'
+];
+
+// The compact format the review page expects:
+//   n=name, g=gender, e=email, c=city, dt=test date,
+//   r/l={s: correct, t: total}, links=[audio urls in question order],
+//   ra/la=[{q, a, ok, corr}] answer breakdowns.
+function buildReviewData(student, reading, listening, speaking) {
+  const mapBreakdown = (breakdown) => (breakdown || []).map((item) => {
+    const row = {
+      q: item.questionText,
+      a: item.studentAnswer || '',
+      ok: !!item.isCorrect
+    };
+    if (!item.isCorrect) row.corr = item.correctAnswer;
+    return row;
+  });
+
+  // Build audio links positioned by questionId. Each speaking answer
+  // carries its questionId (added in app.js); we place its URL at that
+  // question's index. Any question with no recording stays an empty
+  // string, which the review page shows as a normal empty paste slot.
+  const byId = {};
+  (speaking || []).forEach((s) => {
+    if (s && s.questionId && s.audioUrl) byId[s.questionId] = s.audioUrl;
+  });
+  const links = SPEAKING_QUESTION_ORDER.map((qid) => byId[qid] || '');
+
+  return {
+    n: `${(student && student.firstName) || ''} ${(student && student.lastName) || ''}`.trim(),
+    g: (student && student.gender) || '',
+    e: (student && student.email) || '',
+    c: [student && student.city, student && student.country].filter(Boolean).join(', '),
+    dt: ruMonthYear(),
+    r: reading ? { s: reading.correct, t: reading.total } : null,
+    l: listening ? { s: listening.correct, t: listening.total } : null,
+    links: links,
+    ra: reading ? mapBreakdown(reading.breakdown) : [],
+    la: listening ? mapBreakdown(listening.breakdown) : []
+  };
+}
+
+// Saves the review dataset as a JSON file in Supabase Storage via the
+// sibling save-review function (same bucket and credentials as the
+// audio files — nothing new to configure), and returns the
+// ready-to-click review page link. Returns null on any failure; the
+// caller then falls back to the full-table email, so no data is lost.
+async function createReviewLink(event, sessionId, reviewData) {
+  try {
+    const siteUrl = process.env.URL || `https://${event.headers.host}`;
+    const res = await fetch(`${siteUrl}/.netlify/functions/save-review`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: sessionId || `review-${Date.now()}`,
+        reviewData
+      })
+    });
+    if (!res.ok) throw new Error(`save-review responded ${res.status}`);
+    const data = await res.json();
+    if (!data || !data.url) throw new Error('no url in save-review response');
+    return `${REVIEW_PAGE_URL}#u=${encodeURIComponent(data.url)}`;
+  } catch (err) {
+    console.error('Review link creation failed (email falls back to full tables):', err);
+    return null;
+  }
+}
+
+function renderReviewButton(link, reviewData) {
+  const audioCount = (reviewData.links || []).filter(Boolean).length;
+  const audioTotal = (reviewData.links || []).length;
+  return `
+    <div style="background:#f0f7f2;border:1px solid #bfe3cd;border-radius:10px;padding:20px 22px;margin:18px 0 24px;text-align:center;">
+      <a href="${link}" target="_blank"
+         style="display:inline-block;background:#1c2b4a;color:#e6d38f;text-decoration:none;font-weight:700;font-size:16px;padding:14px 30px;border-radius:8px;">
+        🎧 Открыть страницу проверки
+      </a>
+      <p style="font-size:13px;color:#3f5147;margin:14px 0 0;line-height:1.5;">
+        Всё уже на месте: данные студента, баллы за чтение и аудирование с разбором ответов
+        и аудиозаписи говорения (${audioCount} из ${audioTotal || '—'}) — каждая в своём вопросе.
+      </p>
+    </div>`;
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method not allowed' };
@@ -257,26 +372,41 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { student, reading, listening, speaking, status } = payload;
+    const { student, reading, listening, speaking, status, sessionId } = payload;
     const safeStatus = status || 'completed'; // default keeps old callers working unchanged
 
     const subjectPrefix = safeStatus === 'completed' ? ''
       : safeStatus === 'abandoned' ? '⚠️ [Не завершён] '
       : '⏳ [Промежуточный] ';
 
-    const html = `
-      <div style="font-family:Arial,Helvetica,sans-serif;color:#1f2933;max-width:720px;">
-        <h2 style="margin-bottom:4px;">Результаты вступительного теста RE-Academy</h2>
-        ${renderStatusBanner(safeStatus)}
+    // Build the one-click review link. Created for every completed test,
+    // and for partial/abandoned snapshots once at least one Speaking
+    // answer exists (before that there is nothing to grade on the page).
+    const uploadedCount = (speaking || []).filter(s => s && s.audioUrl).length;
+    let reviewLink = null;
+    let reviewData = null;
+    if (safeStatus === 'completed' || uploadedCount > 0) {
+      reviewData = buildReviewData(student, reading, listening, speaking);
+      reviewLink = await createReviewLink(event, sessionId, reviewData);
+    }
 
+    const studentBlock = `
         <h3>Студент</h3>
         <p style="line-height:1.6;">
           ${escapeHtml(student && student.firstName)} ${escapeHtml(student && student.lastName)}<br>
           Email: ${escapeHtml(student && student.email)}<br>
           Город: ${escapeHtml(student && student.city)}, Страна: ${escapeHtml(student && student.country)}<br>
           Год рождения: ${escapeHtml(student && student.birthYear)}, Пол: ${escapeHtml(student && student.gender)}
-        </p>
+        </p>`;
 
+    const scoreSummary = `
+        <p style="font-size:14.5px;line-height:1.7;">
+          📖 Чтение: <strong>${reading ? `${reading.correct} / ${reading.total} (${reading.percent}%)` : 'не пройдено'}</strong><br>
+          🎧 Аудирование: <strong>${listening ? `${listening.correct} / ${listening.total} (${listening.percent}%)` : 'не пройдено'}</strong><br>
+          🎤 Говорение: <strong>${uploadedCount} ${uploadedCount === 1 ? 'запись' : 'записей'}</strong> — оценивается на странице проверки
+        </p>`;
+
+    const fullTables = `
         <h3>Чтение: ${reading ? `${reading.correct} / ${reading.total} (${reading.percent}%)` : 'не пройдено'}</h3>
         ${reading && reading.breakdown && reading.breakdown.length ? renderBreakdownTable(reading.breakdown) : '<p style="color:#5b6472;font-size:13px;">Раздел не пройден.</p>'}
 
@@ -284,9 +414,36 @@ exports.handler = async (event) => {
         ${listening && listening.breakdown && listening.breakdown.length ? renderBreakdownTable(listening.breakdown) : '<p style="color:#5b6472;font-size:13px;">Раздел не пройден.</p>'}
 
         <h3>Говорение</h3>
-        ${renderSpeakingTable(speaking)}
+        ${renderSpeakingTable(speaking)}`;
 
-        ${safeStatus === 'completed' ? renderAssessmentTemplate(reading, listening, speaking) : ''}
+    let bodyHtml;
+    if (reviewLink) {
+      // New streamlined layout: one link up top, full data kept below
+      // as a backup in case the review page can't load its JSON later
+      // (e.g. the stored file was deleted).
+      bodyHtml = `
+        ${studentBlock}
+        ${renderReviewButton(reviewLink, reviewData)}
+        ${scoreSummary}
+        <hr style="border:none;border-top:2px solid #e3e8ef;margin:26px 0 18px;">
+        <p style="font-size:12px;color:#9aa5b1;letter-spacing:0.04em;text-transform:uppercase;font-weight:700;">
+          Резервная копия данных (если страница проверки не открывается)
+        </p>
+        ${fullTables}`;
+    } else {
+      // Fallback: the old full layout, including the manual assessment
+      // template on completed tests.
+      bodyHtml = `
+        ${studentBlock}
+        ${fullTables}
+        ${safeStatus === 'completed' ? renderAssessmentTemplate(reading, listening, speaking) : ''}`;
+    }
+
+    const html = `
+      <div style="font-family:Arial,Helvetica,sans-serif;color:#1f2933;max-width:720px;">
+        <h2 style="margin-bottom:4px;">Результаты вступительного теста RE-Academy</h2>
+        ${renderStatusBanner(safeStatus)}
+        ${bodyHtml}
       </div>`;
 
     const transporter = nodemailer.createTransport({
