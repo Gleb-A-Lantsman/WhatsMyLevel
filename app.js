@@ -1464,8 +1464,47 @@ function renderReportStatus() {
 }
 
 // ---------------------------------------------------------------------
-// Finish
+// Finish — two calls to action, no restart (a placement test should not
+// invite re-submissions). The referral button is the priority: sharing
+// the test with a friend is a warm, zero-cost lead, and the finish
+// screen is the moment the student is most receptive.
 // ---------------------------------------------------------------------
-document.getElementById('btnRestart').addEventListener('click', () => {
-  location.reload();
-});
+const TEST_SHARE_URL = 'https://re-entry-test.netlify.app/';
+
+// "Отправить тест другу" — on phones this opens the native share sheet
+// (one tap to WhatsApp/Telegram/etc., where most students are); on
+// desktop, or if sharing is unavailable/cancelled, it copies the link
+// and briefly confirms. Errors never leave the student with a dead
+// button — worst case they see the copy confirmation.
+const btnShareFriend = document.getElementById('btnShareFriend');
+if (btnShareFriend) {
+  btnShareFriend.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const shareData = {
+      title: 'Вступительный тест RE-Academy',
+      text: 'Узнай свой уровень английского — бесплатный вступительный тест Royal English Academy:',
+      url: TEST_SHARE_URL
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch (err) {
+        // User cancelled the share sheet, or it failed — fall through
+        // to copying the link so the button still does something useful.
+        if (err && err.name === 'AbortError') return;
+      }
+    }
+    // Fallback: copy the link to the clipboard and confirm on the button.
+    try {
+      await navigator.clipboard.writeText(TEST_SHARE_URL);
+      const original = btnShareFriend.textContent;
+      btnShareFriend.textContent = '✓ Ссылка скопирована!';
+      setTimeout(() => { btnShareFriend.textContent = original; }, 2500);
+    } catch (err) {
+      // Last resort if even clipboard is blocked: open the link so the
+      // student can copy it from the address bar and forward it.
+      window.open(TEST_SHARE_URL, '_blank', 'noopener');
+    }
+  });
+}
