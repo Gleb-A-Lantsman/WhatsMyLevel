@@ -34,6 +34,7 @@ const state = {
   finalReportSent: false,  // guards against double-emailing once the real completion report goes out
   speakingRecordings: [],  // [{ questionId, part, topic, prompt, blob }] — raw, in-memory only
   uploadedSpeaking: [],    // [{ part, topic, prompt, audioUrl }] — already uploaded to Supabase, safe to report at any time
+  pendingUploads: [],      // in-flight uploadSpeakingRecording promises — awaited before the final report is sent
   reportStatus: 'idle',    // 'idle' | 'sending' | 'sent' | 'error'
 
   speakingIndex: 0,
@@ -1270,30 +1271,47 @@ function blobToBase64(blob) {
 // from the MediaRecorder 'stop' handler — by the time this runs, the
 // answer is safe even if the student abandons the test a moment later.
 async function uploadSpeakingRecording(rec) {
-  try {
-    const base64 = await blobToBase64(rec.blob);
-    const uploadRes = await fetch('/.netlify/functions/upload-recording', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sessionId: state.sessionId,
-        questionId: rec.questionId,
-        mimeType: rec.blob.type || 'audio/webm',
-        audioBase64: base64
-      })
-    });
-    if (!uploadRes.ok) throw new Error(`Upload failed for ${rec.questionId}`);
-    const { url } = await uploadRes.json();
-    state.uploadedSpeaking.push({ questionId: rec.questionId, part: rec.part, topic: rec.topic, prompt: rec.prompt, audioUrl: url });
-    // Do NOT call sendPartialReport() here — that would fire an email after
-    // every single question (15+ emails per student). Instead a single
-    // delayed partial send is scheduled when Speaking starts (see goToSpeakingTask).
-  } catch (err) {
-    // Don't block the test flow on an upload hiccup — the recording
-    // stays in state.speakingRecordings either way, and whatever DID
-    // upload successfully is still reportable.
-    console.error('Speaking upload error:', err);
-  }
+  // The upload is tracked in state.pendingUploads so the final report can
+  // wait for it. Without this, the LAST answer's upload can still be in
+  // flight when submitReport() builds the email — which dropped question
+  // 15 from some normally-completed tests (the upload landed in Supabase,
+  // just not into state.uploadedSpeaking in time).
+  const uploadPromise = (async () => {
+    try {
+      const base64 = await blobToBase64(rec.blob);
+      const uploadRes = await fetch('/.netlify/functions/upload-recording', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: state.sessionId,
+          questionId: rec.questionId,
+          mimeType: rec.blob.type || 'audio/webm',
+          audioBase64: base64
+        })
+      });
+      if (!uploadRes.ok) throw new Error(`Upload failed for ${rec.questionId}`);
+      const { url } = await uploadRes.json();
+      state.uploadedSpeaking.push({ questionId: rec.questionId, part: rec.part, topic: rec.topic, prompt: rec.prompt, audioUrl: url });
+      // Do NOT call sendPartialReport() here — that would fire an email after
+      // every single question (15+ emails per student). Instead a single
+      // delayed partial send is scheduled when Speaking starts (see goToSpeakingTask).
+    } catch (err) {
+      // Don't block the test flow on an upload hiccup — the recording
+      // stays in state.speakingRecordings either way, and whatever DID
+      // upload successfully is still reportable.
+      console.error('Speaking upload error:', err);
+    }
+  })();
+
+  // Register the in-flight upload, and clear it from the list once done
+  // (whether it succeeded or failed) so the list only ever holds uploads
+  // that are still running.
+  state.pendingUploads.push(uploadPromise);
+  uploadPromise.finally(() => {
+    const i = state.pendingUploads.indexOf(uploadPromise);
+    if (i !== -1) state.pendingUploads.splice(i, 1);
+  });
+  return uploadPromise;
 }
 
 // Builds the report payload from whatever is available right now —
@@ -1332,6 +1350,21 @@ async function sendReportPayload(payload, { keepalive = false } = {}) {
 async function submitReport() {
   state.reportStatus = 'sending';
   renderReportStatus();
+
+  // Wait for any still-uploading recordings — in particular the LAST
+  // answer, whose upload is often still in flight at this moment. This
+  // closes the race where a normally-completed test emailed only 14 of
+  // 15 answers because the final upload hadn't landed yet. Bounded by a
+  // 20-second timeout so a genuinely stuck upload can't hang the report
+  // forever; whatever uploaded by then is still sent, and the backup
+  // tables in the email carry the rest.
+  try {
+    await Promise.race([
+      Promise.allSettled(state.pendingUploads),
+      new Promise((resolve) => setTimeout(resolve, 20000))
+    ]);
+  } catch (e) { /* allSettled never rejects; this guard is belt-and-braces */ }
+
   try {
     await sendReportPayload(buildReportPayload('completed'));
     clearTimeout(state.speakingPartialHandle);
