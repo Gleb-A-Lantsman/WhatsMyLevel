@@ -606,7 +606,7 @@ function renderListeningTask(index) {
         <div class="audio-time" id="audioTime-${task.id}">0:00 / 0:00</div>
       </div>
     </div>
-    <p class="audio-error" id="audioError-${task.id}">Не удалось загрузить аудиофайл. Добавьте файл <code>${task.audioUrl}</code>, чтобы проверить воспроизведение.</p>
+    <p class="audio-error" id="audioError-${task.id}">Не удалось загрузить аудио. Проверьте подключение к интернету и обновите страницу.</p>
     <audio id="audioEl-${task.id}" src="${task.audioUrl}" preload="metadata"></audio>
   `;
   document.getElementById('listeningPassagePane').innerHTML = leftHtml;
@@ -704,8 +704,39 @@ function setupAudioPlayer(task) {
 
   const fmt = (t) => (isFinite(t) ? formatTime(t) : '0:00');
 
+  // Shows the recoverable error state: a message plus a "try again"
+  // button that re-fetches the audio. A transient network hiccup on
+  // load (most likely on the FIRST file of the section, whose fetch
+  // starts the instant the section opens) used to permanently disable
+  // playback with no way back. Now the student can simply retry, and a
+  // one-off blip becomes a two-second delay instead of a dead section.
+  const showLoadError = () => {
+    errorEl.style.display = 'block';
+    errorEl.innerHTML =
+      'Не удалось загрузить аудио. Проверьте подключение к интернету и ' +
+      `<button type="button" class="link-btn" id="audioRetry-${task.id}">попробуйте ещё раз</button>.`;
+    const retryBtn = document.getElementById(`audioRetry-${task.id}`);
+    if (retryBtn) {
+      retryBtn.addEventListener('click', () => {
+        errorEl.style.display = 'none';
+        // Re-point the element at the file and reload it. A cache-busting
+        // query string dodges any half-cached/failed response the browser
+        // may have kept from the first attempt.
+        audio.src = `${task.audioUrl}?retry=${Date.now()}`;
+        audio.load();
+        // Only re-enable play if the student still has listens left.
+        btn.disabled = remaining <= 0;
+      });
+    }
+    btn.disabled = true;
+  };
+
   audio.addEventListener('loadedmetadata', () => {
     timeEl.textContent = `${fmt(0)} / ${fmt(audio.duration)}`;
+    // A successful (re)load clears any error state and restores the
+    // button, so a retry that works leaves no trace.
+    errorEl.style.display = 'none';
+    btn.disabled = remaining <= 0;
   });
   audio.addEventListener('timeupdate', () => {
     timeEl.textContent = `${fmt(audio.currentTime)} / ${fmt(audio.duration)}`;
@@ -714,10 +745,7 @@ function setupAudioPlayer(task) {
     timeEl.textContent = `${fmt(audio.duration)} / ${fmt(audio.duration)}`;
     btn.disabled = remaining <= 0;
   });
-  audio.addEventListener('error', () => {
-    errorEl.style.display = 'block';
-    btn.disabled = true;
-  });
+  audio.addEventListener('error', showLoadError);
 
   btn.addEventListener('click', () => {
     if (remaining <= 0) return;
@@ -728,8 +756,11 @@ function setupAudioPlayer(task) {
       audio.currentTime = 0;
     } catch (e) { /* ignore — duration not known yet */ }
     audio.play().catch(() => {
-      errorEl.style.display = 'block';
-      btn.disabled = remaining <= 0;
+      // Playback failed (e.g. the load never completed). Refund this
+      // listen and offer a retry rather than silently burning one.
+      remaining++;
+      remainingEl.textContent = `Осталось прослушиваний: ${remaining}`;
+      showLoadError();
     });
   });
 }
