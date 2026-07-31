@@ -701,3 +701,40 @@ input:invalid:not(:placeholder-shown) { border-color: var(--color-danger); }
   .card-icons { gap: 18px; }
   .speaking-actions button { min-width: 100%; }
 }
+
+.finish-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+/* Referral is the hero: full-width, prominent, on top */
+.share-friend-btn {
+  width: 100%;
+  padding: 16px 20px;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  border-radius: var(--radius-md, 10px);
+  background: var(--color-primary, #2e4370);
+  color: #fff;
+  transition: transform 0.08s ease, filter 0.15s ease;
+}
+.share-friend-btn:hover { filter: brightness(1.08); }
+.share-friend-btn:active { transform: scale(0.98); }
+/* About link: quieter, secondary, below */
+.about-re-btn {
+  display: block;
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 15px;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: var(--radius-md, 10px);
+  background: transparent;
+  color: var(--color-primary, #2e4370);
+  border: 1.5px solid var(--color-line, #d8cfc0);
+  transition: background 0.15s ease;
+}
+.about-re-btn:hover { background: var(--color-bg-soft, #f5f0e6); }
